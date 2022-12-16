@@ -108,7 +108,7 @@ void edir(const char *dirname) {
   int wdir;
   DIR *dir;
   direntry *d;
-  int i;
+  unsigned i;
 
   if ((wdir =open_read(".")) == -1)
     fatal("unable to open current working directory");
@@ -168,7 +168,7 @@ void limit(int what, long l) {
   struct rlimit r;
 
   if (getrlimit(what, &r) == -1) fatal("unable to getrlimit()");
-  if ((l < 0) || (l > r.rlim_max))
+  if ((l < 0) || ((unsigned long)l > r.rlim_max))
     r.rlim_cur =r.rlim_max;
   else
     r.rlim_cur =l;
@@ -308,12 +308,13 @@ int main(int argc, const char **argv) {
     case 'n':
       switch (*optarg) {
         case '-':
-          if (optarg[scan_ulong(++optarg, &ul)]) usage(); nicelvl =ul;
+          ++optarg;
+          if (optarg[scan_ulong(optarg, &ul)]) { usage(); nicelvl =ul; }
           nicelvl *=-1;
           break;
-        case '+': ++optarg;
+        case '+': ++optarg; __attribute__((fallthrough));
         default:
-          if (optarg[scan_ulong(optarg, &ul)]) usage(); nicelvl =ul;
+          if (optarg[scan_ulong(optarg, &ul)]) { usage(); nicelvl =ul; }
           break;
       }
       break;
@@ -325,6 +326,7 @@ int main(int argc, const char **argv) {
     case '1': nostdout =1; break;
     case '2': nostderr =1; break;
     case 'V': strerr_warn1("$Id: f279d44141c981dd7535a12260efcf1ef7beed26 $", 0);
+              __attribute__((fallthrough));
     case '?': usage();
     }
   argv +=optind;
@@ -366,7 +368,7 @@ int main(int argc, const char **argv) {
 void setuidgid_usage() {
   strerr_die4x(100, "usage: ", progname, USAGE_SETUIDGID, "\n");
 }
-void setuidgid(int argc, const char *const *argv) {
+void setuidgid(int __attribute__((unused)) argc, const char *const *argv) {
   const char *account;
 
   if (! (account =*++argv)) setuidgid_usage();
@@ -379,7 +381,7 @@ void setuidgid(int argc, const char *const *argv) {
 void envuidgid_usage() {
   strerr_die4x(100, "usage: ", progname, USAGE_ENVUIDGID, "\n");
 }
-void envuidgid(int argc, const char *const *argv) {
+void envuidgid(int __attribute__((unused)) argc, const char *const *argv) {
   const char *account;
 
   if (! (account =*++argv)) envuidgid_usage();
@@ -392,7 +394,7 @@ void envuidgid(int argc, const char *const *argv) {
 void envdir_usage() {
   strerr_die4x(100, "usage: ", progname, USAGE_ENVDIR, "\n");
 }
-void envdir(int argc, const char *const *argv) {
+void envdir(int __attribute__((unused)) argc, const char *const *argv) {
   const char *dir;
 
   if (! (dir =*++argv)) envdir_usage();
@@ -405,7 +407,7 @@ void envdir(int argc, const char *const *argv) {
 void pgrphack_usage() {
   strerr_die4x(100, "usage: ", progname, USAGE_PGRPHACK, "\n");
 }
-void pgrphack(int argc, const char *const *argv) {
+void pgrphack(int __attribute__((unused)) argc, const char *const *argv) {
   if (! *++argv) pgrphack_usage();
   setsid();
   pathexec(argv);
@@ -451,10 +453,11 @@ void getlarg(long *l) {
 }
 void softlimit(int argc, const char *const *argv) {
   int opt;
-  
+
   while ((opt =getopt(argc,argv,"a:c:d:f:l:m:o:p:r:s:t:")) != opteof)
     switch(opt) {
     case '?': softlimit_usage();
+              __attribute__((fallthrough));
     case 'a': getlarg(&limita); break;
     case 'c': getlarg(&limitc); break;
     case 'd': getlarg(&limitd); break;
@@ -473,3 +476,4 @@ void softlimit(int argc, const char *const *argv) {
   pathexec(argv);
   fatal2("unable to run", *argv);
 }
+/* vim: set sts=2 ts=2 tw=2 et : */
