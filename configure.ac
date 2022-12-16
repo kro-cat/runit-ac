@@ -76,6 +76,8 @@ AX_VALGRIND_DFLT([memcheck], [on])
 AX_VALGRIND_CHECK
 
 #program config
+AC_PROG_CC
+AC_PROG_CXX
 AC_PROG_RANLIB
 
 #headers
@@ -136,7 +138,12 @@ AC_CHECK_FUNCS([waitpid],
 
 AC_LANG([C])
 AC_MSG_CHECKING([for short setgroups])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([[]],
+AC_RUN_IFELSE([AC_LANG_PROGRAM(
+  [[
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include <grp.h>
+  ]],
   [[
     short x[4];
     x[0] = x[1] = 1;

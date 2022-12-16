@@ -57,7 +57,6 @@ __build_prefix__libunix_a_SOURCES = alloc.c alloc_re.c buffer.c buffer_0.c buffe
 nodist___build_prefix__libunix_a_SOURCES = alloc.h buffer.h byte.h coe.h env.h error.h fd.h fifo.h gen_alloc.h gen_allocdefs.h lock.h ndelay.h open.h pathexec.h prot.h readclose.h seek.h sgetopt.h sig.h str.h stralloc.h strerr.h subgetopt.h
 
 
-
 __build_prefix__libbyte_a_SOURCES = byte_chr.c byte_copy.c byte_cr.c byte_diff.c byte_rchr.c fmt_uint.c fmt_uint0.c fmt_ulong.c scan_ulong.c str_chr.c str_diff.c str_len.c str_start.c
 nodist___build_prefix__libbyte_a_SOURCES = byte.h fmt.h scan.h str.h
 
