@@ -1,6 +1,7 @@
 /* Public domain. */
 
-#include "hasshsgr.h"
+#include <config.h>
+//#include "hasshsgr.h"
 #include "prot.h"
 
 int prot_gid(int gid)

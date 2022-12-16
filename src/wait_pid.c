@@ -3,7 +3,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "error.h"
-#include "haswaitp.h"
+#include <config.h>
+//#include "haswaitp.h"
 
 #ifdef HASWAITPID
 
@@ -18,6 +19,7 @@ int wait_pid(wstat,pid) int *wstat; int pid;
 }
 
 #else
+#warn "waitpid() is not available on your system. using a workaround - this may be unstable."
 
 /* XXX untested */
 /* XXX breaks down with more than two children */

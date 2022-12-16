@@ -2,7 +2,8 @@
 
 #include <signal.h>
 #include "sig.h"
-#include "hassgprm.h"
+#include <config.h>
+//#include "hassgprm.h"
 
 void sig_block(int sig)
 {
