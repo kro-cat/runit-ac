@@ -34,7 +34,7 @@
 #__top_builddir__bin_library_a_SOURCES = library.c
 #include_HEADERS = library.h
 
-AM_CFLAGS = $(WARN_CFLAGS) -Wall -I$(top_srcdir)/include
+AM_CFLAGS = $(WARN_CFLAGS) -Wall -I$(top_srcdir)/src/include
 bindir = $(top_builddir)/bin
 
 bin_PROGRAMS = $(bindir)/chpst \
