@@ -66,6 +66,7 @@ nodist___build_prefix__libtime_a_SOURCES = iopause.h select.h tai.h taia.h
 
 
 __build_prefix__chpst_SOURCES = chpst.c uidgid.c
+chpst.$(OBJEXT): libunix.a libbyte.a
 __build_prefix__chpst_LDFLAGS = libunix.a libbyte.a
 __build_prefix__chpst_LDADD =
 

@@ -1,468 +1,1197 @@
-IT=chpst runit runit-init runsv runsvchdir runsvdir sv svlogd utmpset
-
-default: sysdeps $(IT)
-
-check: $(IT)
-	./check-local $(IT)
-
-runit: load runit.o unix.a byte.a
-	./load runit unix.a byte.a -static
-
-runit-init: load runit-init.o unix.a byte.a
-	./load runit-init unix.a byte.a -static
-
-runsv: load runsv.o unix.a byte.a time.a
-	./load runsv unix.a byte.a time.a
-
-runsvdir: load runsvdir.o unix.a byte.a time.a
-	./load runsvdir unix.a byte.a time.a
-
-runsvstat: load runsvstat.o unix.a byte.a time.a
-	./load runsvstat unix.a byte.a time.a
-
-runsvctrl: load runsvctrl.o unix.a byte.a
-	./load runsvctrl unix.a byte.a
-
-sv: load sv.o unix.a byte.a time.a
-	./load sv unix.a byte.a time.a
-
-svwaitup: load svwaitup.o unix.a byte.a time.a
-	./load svwaitup unix.a byte.a time.a
-
-svwaitdown: load svwaitdown.o unix.a byte.a time.a
-	./load svwaitdown unix.a byte.a time.a
-
-utmpset: load utmpset.o unix.a byte.a
-	./load utmpset unix.a byte.a
-
-runsvchdir: load runsvchdir.o unix.a byte.a
-	./load runsvchdir unix.a byte.a
-
-svlogd: load svlogd.o pmatch.o fmt_ptime.o unix.a byte.a time.a socket.lib
-	./load svlogd pmatch.o fmt_ptime.o unix.a byte.a time.a \
-	`cat socket.lib`
-
-chpst: load chpst.o uidgid.o unix.a byte.a
-	./load chpst uidgid.o unix.a byte.a
-
-runit.o: compile sysdeps runit.c
-	./compile runit.c
-
-runit-init.o: compile runit-init.c
-	./compile runit-init.c
-
-runsv.o: compile sysdeps runsv.c
-	./compile runsv.c
-
-runsvdir.o: compile sysdeps runsvdir.c
-	./compile runsvdir.c
-
-runsvstat.o: compile sysdeps runsvstat.c
-	./compile runsvstat.c
-
-runsvctrl.o: compile runsvctrl.c
-	./compile runsvctrl.c
-
-sv.o: compile sysdeps sv.c
-	./compile sv.c
-
-svwaitup.o: compile sysdeps svwaitup.c
-	./compile svwaitup.c
-
-svwaitdown.o: compile sysdeps svwaitdown.c
-	./compile svwaitdown.c
-
-utmpset.o: compile sysdeps utmpset.c
-	./compile utmpset.c
-
-runsvchdir.o: compile runsvchdir.c
-	./compile runsvchdir.c
-
-svlogd.o: compile sysdeps svlogd.c
-	./compile svlogd.c
-
-chpst.o: compile sysdeps chpst.c
-	./compile chpst.c
-
-
-uidgid.o: compile uidgid.c uidgid.h
-	./compile uidgid.c
-
-pmatch.o: compile pmatch.c
-	./compile pmatch.c
-
-fmt_ptime.o: compile sysdeps fmt_ptime.c
-	./compile fmt_ptime.c
-
-reboot_system.h: choose compile reboot_system.h1 reboot_system.h2
-	./choose c tryreboot reboot_system.h1 reboot_system.h2 > \
-	  reboot_system.h
-
-uw_tmp.h: compile uw_tmp.h1 uw_tmp.h2
-	( ./compile tryuwtmpx.c 2>/dev/null && cat uw_tmp.h2 >uw_tmp.h ) || \
-	( ./compile tryuwtmp.c 2>/dev/null && cat uw_tmp.h1 >uw_tmp.h )
-	rm -f tryuwtmp.o tryuwtmpx.o
-
-socket.lib: compile load trysocketlib.c
-	./compile trysocketlib.c
-	( ./load trysocketlib >/dev/null 2>&1 || \
-	  ( ./load trysocketlib -lxnet >/dev/null 2>&1 && echo '-lxnet' ) || \
-	  ( ./load trysocketlib -lsocket -lnsl >/dev/null 2>&1 && \
-	    echo '-lsocket -lnsl' ) \
-	) >socket.lib
-	rm -f trysocketlib.o trysocketlib
-
-clean:
-	find . -name \*~ -exec rm -f {} \;
-	find . -name .??*~ -exec rm -f {} \;
-	find . -name \#?* -exec rm -f {} \;
-	rm -f `cat TARGETS`
-
-alloc.o: alloc.c alloc.h compile error.h
-	./compile alloc.c
-
-alloc_re.o: alloc.h alloc_re.c byte.h compile
-	./compile alloc_re.c
-
-buffer.o: buffer.c buffer.h compile
-	./compile buffer.c
-
-buffer_0.o: buffer.h buffer_0.c compile
-	./compile buffer_0.c
-
-buffer_1.o: buffer.h buffer_1.c compile
-	./compile buffer_1.c
-
-buffer_2.o: buffer.h buffer_2.c compile
-	./compile buffer_2.c
-
-buffer_get.o: buffer.h buffer_get.c byte.h compile error.h
-	./compile buffer_get.c
-
-buffer_put.o: buffer.h buffer_put.c byte.h compile error.h str.h
-	./compile buffer_put.c
-
-buffer_read.o: buffer.h buffer_read.c compile
-	./compile buffer_read.c
-
-buffer_write.o: buffer.h buffer_write.c compile
-	./compile buffer_write.c
-
-byte.a: byte_chr.o byte_copy.o byte_cr.o byte_diff.o byte_rchr.o \
-fmt_uint.o fmt_uint0.o fmt_ulong.o makelib scan_ulong.o str_chr.o \
-str_diff.o str_len.o str_start.o
-	./makelib byte.a byte_chr.o byte_copy.o byte_cr.o byte_diff.o \
-	byte_rchr.o fmt_uint.o fmt_uint0.o fmt_ulong.o scan_ulong.o str_chr.o \
-	str_diff.o str_len.o str_start.o
-
-byte_chr.o: byte.h byte_chr.c compile
-	./compile byte_chr.c
-
-byte_copy.o: byte.h byte_copy.c compile
-	./compile byte_copy.c
-
-byte_cr.o: byte.h byte_cr.c compile
-	./compile byte_cr.c
-
-byte_diff.o: byte.h byte_diff.c compile
-	./compile byte_diff.c
-
-byte_rchr.o: byte.h byte_rchr.c compile
-	./compile byte_rchr.c
-
-chkshsgr: chkshsgr.o load
-	./load chkshsgr 
-
-chkshsgr.o: chkshsgr.c compile
-	./compile chkshsgr.c
-
-choose: choose.sh warn-auto.sh
-	rm -f choose
-	cat warn-auto.sh choose.sh \
-	> choose
-	chmod 555 choose
-
-coe.o: coe.c coe.h compile
-	./compile coe.c
-
-compile: conf-cc print-cc.sh systype warn-auto.sh
-	rm -f compile
-	sh print-cc.sh > compile
-	chmod 555 compile
-
-direntry.h: choose compile direntry.h1 direntry.h2 trydrent.c
-	./choose c trydrent direntry.h1 direntry.h2 > direntry.h
-
-env.o: compile env.c env.h str.h
-	./compile env.c
-
-error.o: compile error.c error.h
-	./compile error.c
-
-error_str.o: compile error.h error_str.c
-	./compile error_str.c
-
-fd_copy.o: compile fd.h fd_copy.c
-	./compile fd_copy.c
-
-fd_move.o: compile fd.h fd_move.c
-	./compile fd_move.c
-
-fifo.o: compile fifo.c fifo.h hasmkffo.h
-	./compile fifo.c
-
-fmt_uint.o: compile fmt.h fmt_uint.c
-	./compile fmt_uint.c
-
-fmt_uint0.o: compile fmt.h fmt_uint0.c
-	./compile fmt_uint0.c
-
-fmt_ulong.o: compile fmt.h fmt_ulong.c
-	./compile fmt_ulong.c
-
-hasflock.h: choose compile hasflock.h1 hasflock.h2 load tryflock.c
-	./choose cl tryflock hasflock.h1 hasflock.h2 > hasflock.h
-
-hasmkffo.h: choose compile hasmkffo.h1 hasmkffo.h2 load trymkffo.c
-	./choose cl trymkffo hasmkffo.h1 hasmkffo.h2 > hasmkffo.h
-
-hassgact.h: choose compile hassgact.h1 hassgact.h2 load trysgact.c
-	./choose cl trysgact hassgact.h1 hassgact.h2 > hassgact.h
-
-hassgprm.h: choose compile hassgprm.h1 hassgprm.h2 load trysgprm.c
-	./choose cl trysgprm hassgprm.h1 hassgprm.h2 > hassgprm.h
-
-hasshsgr.h: chkshsgr choose compile hasshsgr.h1 hasshsgr.h2 load \
-tryshsgr.c warn-shsgr
-	./chkshsgr || ( cat warn-shsgr; exit 1 )
-	./choose clr tryshsgr hasshsgr.h1 hasshsgr.h2 > hasshsgr.h
-
-haswaitp.h: choose compile haswaitp.h1 haswaitp.h2 load trywaitp.c
-	./choose cl trywaitp haswaitp.h1 haswaitp.h2 > haswaitp.h
-
-iopause.h: choose compile iopause.h1 iopause.h2 load trypoll.c
-	./choose clr trypoll iopause.h1 iopause.h2 > iopause.h
-
-iopause.o: compile iopause.c iopause.h select.h tai.h taia.h uint64.h
-	./compile iopause.c
-
-load: conf-ld print-ld.sh systype warn-auto.sh
-	rm -f load
-	sh print-ld.sh > load
-	chmod 555 load
-
-lock_ex.o: compile hasflock.h lock.h lock_ex.c
-	./compile lock_ex.c
-
-lock_exnb.o: compile hasflock.h lock.h lock_exnb.c
-	./compile lock_exnb.c
-
-makelib: print-ar.sh systype warn-auto.sh
-	rm -f makelib
-	sh print-ar.sh > makelib
-	chmod 555 makelib
-
-ndelay_off.o: compile ndelay.h ndelay_off.c
-	./compile ndelay_off.c
-
-ndelay_on.o: compile ndelay.h ndelay_on.c
-	./compile ndelay_on.c
-
-open_append.o: compile open.h open_append.c
-	./compile open_append.c
-
-open_read.o: compile open.h open_read.c
-	./compile open_read.c
-
-open_trunc.o: compile open.h open_trunc.c
-	./compile open_trunc.c
-
-open_write.o: compile open.h open_write.c
-	./compile open_write.c
-
-openreadclose.o: compile error.h gen_alloc.h open.h openreadclose.c \
-openreadclose.h readclose.h stralloc.h
-	./compile openreadclose.c
-
-pathexec_env.o: alloc.h byte.h compile env.h gen_alloc.h pathexec.h \
-pathexec_env.c str.h stralloc.h
-	./compile pathexec_env.c
-
-pathexec_run.o: compile env.h error.h gen_alloc.h pathexec.h \
-pathexec_run.c str.h stralloc.h
-	./compile pathexec_run.c
-
-prot.o: compile hasshsgr.h prot.c prot.h
-	./compile prot.c
-
-readclose.o: compile error.h gen_alloc.h readclose.c readclose.h \
-stralloc.h
-	./compile readclose.c
-
-scan_ulong.o: compile scan.h scan_ulong.c
-	./compile scan_ulong.c
-
-seek_set.o: compile seek.h seek_set.c
-	./compile seek_set.c
-
-select.h: choose compile select.h1 select.h2 trysysel.c
-	./choose c trysysel select.h1 select.h2 > select.h
-
-sgetopt.o: buffer.h compile sgetopt.c sgetopt.h subgetopt.h
-	./compile sgetopt.c
-
-sig.o: compile sig.c sig.h
-	./compile sig.c
-
-sig_block.o: compile hassgprm.h sig.h sig_block.c
-	./compile sig_block.c
-
-sig_catch.o: compile hassgact.h sig.h sig_catch.c
-	./compile sig_catch.c
-
-sig_pause.o: compile hassgprm.h sig.h sig_pause.c
-	./compile sig_pause.c
-
-str_chr.o: compile str.h str_chr.c
-	./compile str_chr.c
-
-str_diff.o: compile str.h str_diff.c
-	./compile str_diff.c
-
-str_len.o: compile str.h str_len.c
-	./compile str_len.c
-
-str_start.o: compile str.h str_start.c
-	./compile str_start.c
-
-stralloc_cat.o: byte.h compile gen_alloc.h stralloc.h stralloc_cat.c
-	./compile stralloc_cat.c
-
-stralloc_catb.o: byte.h compile gen_alloc.h stralloc.h \
-stralloc_catb.c
-	./compile stralloc_catb.c
-
-stralloc_cats.o: byte.h compile gen_alloc.h str.h stralloc.h \
-stralloc_cats.c
-	./compile stralloc_cats.c
-
-stralloc_eady.o: alloc.h compile gen_alloc.h gen_allocdefs.h \
-stralloc.h stralloc_eady.c
-	./compile stralloc_eady.c
-
-stralloc_opyb.o: byte.h compile gen_alloc.h stralloc.h \
-stralloc_opyb.c
-	./compile stralloc_opyb.c
-
-stralloc_opys.o: byte.h compile gen_alloc.h str.h stralloc.h \
-stralloc_opys.c
-	./compile stralloc_opys.c
-
-stralloc_pend.o: alloc.h compile gen_alloc.h gen_allocdefs.h \
-stralloc.h stralloc_pend.c
-	./compile stralloc_pend.c
-
-strerr_die.o: buffer.h compile strerr.h strerr_die.c
-	./compile strerr_die.c
-
-strerr_sys.o: compile error.h strerr.h strerr_sys.c
-	./compile strerr_sys.c
-
-subgetopt.o: compile subgetopt.c subgetopt.h
-	./compile subgetopt.c
-
-sysdeps: compile direntry.h hasflock.h hasmkffo.h hassgact.h \
-hassgprm.h hasshsgr.h haswaitp.h iopause.h load select.h systype \
-uint64.h reboot_system.h uw_tmp.h socket.lib
-	rm -f sysdeps
-	cat systype compile load socket.lib >>sysdeps
-	grep sysdep direntry.h >>sysdeps
-	grep sysdep haswaitp.h >>sysdeps
-	grep sysdep hassgact.h >>sysdeps
-	grep sysdep hassgprm.h >>sysdeps
-	grep sysdep select.h >>sysdeps
-	grep sysdep uint64.h >>sysdeps
-	grep sysdep iopause.h >>sysdeps
-	grep sysdep hasmkffo.h >>sysdeps
-	grep sysdep hasflock.h >>sysdeps
-	grep sysdep hasshsgr.h >>sysdeps
-	grep sysdep reboot_system.h >>sysdeps
-	grep sysdep uw_tmp.h >>sysdeps
-	cat sysdeps
-
-systype: find-systype.sh trycpp.c x86cpuid.c
-	sh find-systype.sh > systype
-
-tai_now.o: compile tai.h tai_now.c uint64.h
-	./compile tai_now.c
-
-tai_pack.o: compile tai.h tai_pack.c uint64.h
-	./compile tai_pack.c
-
-tai_sub.o: compile tai.h tai_sub.c uint64.h
-	./compile tai_sub.c
-
-tai_unpack.o: compile tai.h tai_unpack.c uint64.h
-	./compile tai_unpack.c
-
-taia_add.o: compile tai.h taia.h taia_add.c uint64.h
-	./compile taia_add.c
-
-taia_approx.o: compile tai.h taia.h taia_approx.c uint64.h
-	./compile taia_approx.c
-
-taia_frac.o: compile tai.h taia.h taia_frac.c uint64.h
-	./compile taia_frac.c
-
-taia_less.o: compile tai.h taia.h taia_less.c uint64.h
-	./compile taia_less.c
-
-taia_now.o: compile tai.h taia.h taia_now.c uint64.h
-	./compile taia_now.c
-
-taia_pack.o: compile tai.h taia.h taia_pack.c uint64.h
-	./compile taia_pack.c
-
-taia_sub.o: compile tai.h taia.h taia_sub.c uint64.h
-	./compile taia_sub.c
-
-taia_uint.o: compile tai.h taia.h taia_uint.c uint64.h
-	./compile taia_uint.c
-
-time.a: iopause.o makelib tai_now.o tai_pack.o tai_sub.o tai_unpack.o \
-taia_add.o taia_approx.o taia_frac.o taia_less.o taia_now.o \
-taia_pack.o taia_sub.o taia_uint.o
-	./makelib time.a iopause.o tai_now.o tai_pack.o tai_sub.o \
-	tai_unpack.o taia_add.o taia_approx.o taia_frac.o taia_less.o \
-	taia_now.o taia_pack.o taia_sub.o taia_uint.o
-
-uint64.h: choose compile load tryulong64.c uint64.h1 uint64.h2
-	./choose clr tryulong64 uint64.h1 uint64.h2 > uint64.h
-
-unix.a: alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o buffer_2.o \
-buffer_get.o buffer_put.o buffer_read.o buffer_write.o coe.o env.o \
-error.o error_str.o fd_copy.o fd_move.o fifo.o lock_ex.o lock_exnb.o \
-makelib ndelay_off.o ndelay_on.o open_append.o open_read.o \
-open_trunc.o open_write.o openreadclose.o pathexec_env.o \
-pathexec_run.o prot.o readclose.o seek_set.o sgetopt.o sig.o \
-sig_block.o sig_catch.o sig_pause.o stralloc_cat.o stralloc_catb.o \
-stralloc_cats.o stralloc_eady.o stralloc_opyb.o stralloc_opys.o \
-stralloc_pend.o strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o \
-wait_pid.o
-	./makelib unix.a alloc.o alloc_re.o buffer.o buffer_0.o buffer_1.o \
-	buffer_2.o buffer_get.o buffer_put.o buffer_read.o buffer_write.o \
-	coe.o env.o error.o error_str.o fd_copy.o fd_move.o fifo.o lock_ex.o \
-	lock_exnb.o ndelay_off.o ndelay_on.o open_append.o open_read.o \
-	open_trunc.o open_write.o openreadclose.o pathexec_env.o \
-	pathexec_run.o prot.o readclose.o seek_set.o sgetopt.o sig.o \
-	sig_block.o sig_catch.o sig_pause.o stralloc_cat.o stralloc_catb.o \
-	stralloc_cats.o stralloc_eady.o stralloc_opyb.o stralloc_opys.o \
-	stralloc_pend.o strerr_die.o strerr_sys.o subgetopt.o wait_nohang.o \
-	wait_pid.o
-
-wait_nohang.o: compile haswaitp.h wait_nohang.c
-	./compile wait_nohang.c
-
-wait_pid.o: compile error.h haswaitp.h wait_pid.c
-	./compile wait_pid.c
-
+# Makefile.in generated by automake 1.16.5 from Makefile.am.
+# Makefile.  Generated from Makefile.in by configure.
+
+# Copyright (C) 1994-2021 Free Software Foundation, Inc.
+
+# This Makefile.in is free software; the Free Software Foundation
+# gives unlimited permission to copy and/or distribute it,
+# with or without modifications, as long as this notice is preserved.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY, to the extent permitted by law; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+# PARTICULAR PURPOSE.
+
+
+
+#
+#  MIT License
+#
+#  Copyright (c) 2022 Kara
+#
+#  Permission is hereby granted, free of charge, to any person obtaining a copy
+#  of this software and associated documentation files (the "Software"), to deal
+#  in the Software without restriction, including without limitation the rights
+#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#  copies of the Software, and to permit persons to whom the Software is
+#  furnished to do so, subject to the following conditions:
+#
+#  The above copyright notice and this permission notice shall be included in all
+#  copies or substantial portions of the Software.
+#
+#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+#  SOFTWARE.
+#
+
+# BINARY EXECUTABLE
+#AM_CFLAGS = $(WARN_CFLAGS) -I$(top_builddir)/include/krossock/src
+#bin_PROGRAMS = $(top_builddir)/bin/program
+#__top_builddir__bin_program_SOURCES = program.c
+#__top_builddir__bin_program_LDFLAGS = -static-libgcc -static $(top_builddir)/include/krossock/bin/libkrossock.a
+#__top_builddir__bin_program_LDADD = -lkrossock -lssl -lcrypto
+
+# LIBRARY
+#noinst_LIBRARIES = $(top_builddir)/bin/library.a
+#__top_builddir__bin_library_a_SOURCES = library.c
+#include_HEADERS = library.h
+
+
+VPATH = ..
+am__is_gnu_make = { \
+  if test -z '$(MAKELEVEL)'; then \
+    false; \
+  elif test -n '$(MAKE_HOST)'; then \
+    true; \
+  elif test -n '$(MAKE_VERSION)' && test -n '$(CURDIR)'; then \
+    true; \
+  else \
+    false; \
+  fi; \
+}
+am__make_running_with_option = \
+  case $${target_option-} in \
+      ?) ;; \
+      *) echo "am__make_running_with_option: internal error: invalid" \
+              "target option '$${target_option-}' specified" >&2; \
+         exit 1;; \
+  esac; \
+  has_opt=no; \
+  sane_makeflags=$$MAKEFLAGS; \
+  if $(am__is_gnu_make); then \
+    sane_makeflags=$$MFLAGS; \
+  else \
+    case $$MAKEFLAGS in \
+      *\\[\ \	]*) \
+        bs=\\; \
+        sane_makeflags=`printf '%s\n' "$$MAKEFLAGS" \
+          | sed "s/$$bs$$bs[$$bs $$bs	]*//g"`;; \
+    esac; \
+  fi; \
+  skip_next=no; \
+  strip_trailopt () \
+  { \
+    flg=`printf '%s\n' "$$flg" | sed "s/$$1.*$$//"`; \
+  }; \
+  for flg in $$sane_makeflags; do \
+    test $$skip_next = yes && { skip_next=no; continue; }; \
+    case $$flg in \
+      *=*|--*) continue;; \
+        -*I) strip_trailopt 'I'; skip_next=yes;; \
+      -*I?*) strip_trailopt 'I';; \
+        -*O) strip_trailopt 'O'; skip_next=yes;; \
+      -*O?*) strip_trailopt 'O';; \
+        -*l) strip_trailopt 'l'; skip_next=yes;; \
+      -*l?*) strip_trailopt 'l';; \
+      -[dEDm]) skip_next=yes;; \
+      -[JT]) skip_next=yes;; \
+    esac; \
+    case $$flg in \
+      *$$target_option*) has_opt=yes; break;; \
+    esac; \
+  done; \
+  test $$has_opt = yes
+am__make_dryrun = (target_option=n; $(am__make_running_with_option))
+am__make_keepgoing = (target_option=k; $(am__make_running_with_option))
+pkgdatadir = $(datadir)/runit
+pkgincludedir = $(includedir)/runit
+pkglibdir = $(libdir)/runit
+pkglibexecdir = $(libexecdir)/runit
+am__cd = CDPATH="$${ZSH_VERSION+.}$(PATH_SEPARATOR)" && cd
+install_sh_DATA = $(install_sh) -c -m 644
+install_sh_PROGRAM = $(install_sh) -c
+install_sh_SCRIPT = $(install_sh) -c
+INSTALL_HEADER = $(INSTALL_DATA)
+transform = $(program_transform_name)
+NORMAL_INSTALL = :
+PRE_INSTALL = :
+POST_INSTALL = :
+NORMAL_UNINSTALL = :
+PRE_UNINSTALL = :
+POST_UNINSTALL = :
+build_triplet = x86_64-pc-linux-gnu
+host_triplet = x86_64-pc-linux-gnu
+bin_PROGRAMS = $(build_prefix)/chpst$(EXEEXT) \
+	$(build_prefix)/runit$(EXEEXT) \
+	$(build_prefix)/runit-init$(EXEEXT) \
+	$(build_prefix)/runsv$(EXEEXT) \
+	$(build_prefix)/runsvchdir$(EXEEXT) \
+	$(build_prefix)/runsvdir$(EXEEXT) $(build_prefix)/sv$(EXEEXT) \
+	$(build_prefix)/svlogd$(EXEEXT) \
+	$(build_prefix)/utmpset$(EXEEXT)
+subdir = src
+ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_valgrind_check.m4 \
+	$(top_srcdir)/configure.ac
+am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
+	$(ACLOCAL_M4)
+DIST_COMMON = $(srcdir)/Makefile.am $(am__DIST_COMMON)
+mkinstalldirs = $(install_sh) -d
+CONFIG_HEADER = $(top_builddir)/config.h
+CONFIG_CLEAN_FILES =
+CONFIG_CLEAN_VPATH_FILES =
+am__installdirs = "$(DESTDIR)$(bindir)"
+PROGRAMS = $(bin_PROGRAMS)
+LIBRARIES = $(noinst_LIBRARIES)
+AR = ar
+ARFLAGS = cru
+AM_V_AR = $(am__v_AR_$(V))
+am__v_AR_ = $(am__v_AR_$(AM_DEFAULT_VERBOSITY))
+am__v_AR_0 = @echo "  AR      " $@;
+am__v_AR_1 = 
+__build_prefix__libbyte_a_AR = $(AR) $(ARFLAGS)
+__build_prefix__libbyte_a_LIBADD =
+am___build_prefix__libbyte_a_OBJECTS = byte_chr.$(OBJEXT) \
+	byte_copy.$(OBJEXT) byte_cr.$(OBJEXT) byte_diff.$(OBJEXT) \
+	byte_rchr.$(OBJEXT) fmt_uint.$(OBJEXT) fmt_uint0.$(OBJEXT) \
+	fmt_ulong.$(OBJEXT) scan_ulong.$(OBJEXT) str_chr.$(OBJEXT) \
+	str_diff.$(OBJEXT) str_len.$(OBJEXT) str_start.$(OBJEXT)
+nodist___build_prefix__libbyte_a_OBJECTS =
+__build_prefix__libbyte_a_OBJECTS =  \
+	$(am___build_prefix__libbyte_a_OBJECTS) \
+	$(nodist___build_prefix__libbyte_a_OBJECTS)
+am__dirstamp = $(am__leading_dot)dirstamp
+__build_prefix__libtime_a_AR = $(AR) $(ARFLAGS)
+__build_prefix__libtime_a_LIBADD =
+am___build_prefix__libtime_a_OBJECTS = iopause.$(OBJEXT) \
+	tai_now.$(OBJEXT) tai_pack.$(OBJEXT) tai_sub.$(OBJEXT) \
+	tai_unpack.$(OBJEXT) taia_add.$(OBJEXT) taia_approx.$(OBJEXT) \
+	taia_frac.$(OBJEXT) taia_less.$(OBJEXT) taia_now.$(OBJEXT) \
+	taia_pack.$(OBJEXT) taia_sub.$(OBJEXT) taia_uint.$(OBJEXT)
+nodist___build_prefix__libtime_a_OBJECTS =
+__build_prefix__libtime_a_OBJECTS =  \
+	$(am___build_prefix__libtime_a_OBJECTS) \
+	$(nodist___build_prefix__libtime_a_OBJECTS)
+__build_prefix__libunix_a_AR = $(AR) $(ARFLAGS)
+__build_prefix__libunix_a_LIBADD =
+am___build_prefix__libunix_a_OBJECTS = alloc.$(OBJEXT) \
+	alloc_re.$(OBJEXT) buffer.$(OBJEXT) buffer_0.$(OBJEXT) \
+	buffer_1.$(OBJEXT) buffer_2.$(OBJEXT) buffer_get.$(OBJEXT) \
+	buffer_put.$(OBJEXT) buffer_read.$(OBJEXT) \
+	buffer_write.$(OBJEXT) coe.$(OBJEXT) env.$(OBJEXT) \
+	error.$(OBJEXT) error_str.$(OBJEXT) fd_copy.$(OBJEXT) \
+	fd_move.$(OBJEXT) fifo.$(OBJEXT) lock_ex.$(OBJEXT) \
+	lock_exnb.$(OBJEXT) ndelay_off.$(OBJEXT) ndelay_on.$(OBJEXT) \
+	open_append.$(OBJEXT) open_read.$(OBJEXT) open_trunc.$(OBJEXT) \
+	open_write.$(OBJEXT) openreadclose.$(OBJEXT) \
+	pathexec_env.$(OBJEXT) pathexec_run.$(OBJEXT) prot.$(OBJEXT) \
+	readclose.$(OBJEXT) seek_set.$(OBJEXT) sgetopt.$(OBJEXT) \
+	sig.$(OBJEXT) sig_block.$(OBJEXT) sig_catch.$(OBJEXT) \
+	sig_pause.$(OBJEXT) stralloc_cat.$(OBJEXT) \
+	stralloc_catb.$(OBJEXT) stralloc_cats.$(OBJEXT) \
+	stralloc_eady.$(OBJEXT) stralloc_opyb.$(OBJEXT) \
+	stralloc_opys.$(OBJEXT) stralloc_pend.$(OBJEXT) \
+	strerr_die.$(OBJEXT) strerr_sys.$(OBJEXT) subgetopt.$(OBJEXT) \
+	wait_nohang.$(OBJEXT) wait_pid.$(OBJEXT)
+nodist___build_prefix__libunix_a_OBJECTS =
+__build_prefix__libunix_a_OBJECTS =  \
+	$(am___build_prefix__libunix_a_OBJECTS) \
+	$(nodist___build_prefix__libunix_a_OBJECTS)
+am___build_prefix__chpst_OBJECTS = chpst.$(OBJEXT) uidgid.$(OBJEXT)
+__build_prefix__chpst_OBJECTS = $(am___build_prefix__chpst_OBJECTS)
+__build_prefix__chpst_DEPENDENCIES =
+__build_prefix__chpst_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__chpst_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__runit_OBJECTS = runit.$(OBJEXT)
+__build_prefix__runit_OBJECTS = $(am___build_prefix__runit_OBJECTS)
+__build_prefix__runit_DEPENDENCIES =
+__build_prefix__runit_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__runit_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__runit_init_OBJECTS = runit-init.$(OBJEXT)
+__build_prefix__runit_init_OBJECTS =  \
+	$(am___build_prefix__runit_init_OBJECTS)
+__build_prefix__runit_init_DEPENDENCIES =
+__build_prefix__runit_init_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__runit_init_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__runsv_OBJECTS = runsv.$(OBJEXT)
+__build_prefix__runsv_OBJECTS = $(am___build_prefix__runsv_OBJECTS)
+__build_prefix__runsv_DEPENDENCIES =
+__build_prefix__runsv_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__runsv_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__runsvchdir_OBJECTS = runsvchdir.$(OBJEXT)
+__build_prefix__runsvchdir_OBJECTS =  \
+	$(am___build_prefix__runsvchdir_OBJECTS)
+__build_prefix__runsvchdir_DEPENDENCIES =
+__build_prefix__runsvchdir_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__runsvchdir_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__runsvdir_OBJECTS = runsvdir.$(OBJEXT)
+__build_prefix__runsvdir_OBJECTS =  \
+	$(am___build_prefix__runsvdir_OBJECTS)
+__build_prefix__runsvdir_DEPENDENCIES =
+__build_prefix__runsvdir_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__runsvdir_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__sv_OBJECTS = sv.$(OBJEXT)
+__build_prefix__sv_OBJECTS = $(am___build_prefix__sv_OBJECTS)
+__build_prefix__sv_DEPENDENCIES =
+__build_prefix__sv_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__sv_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__svlogd_OBJECTS = svlogd.$(OBJEXT) pmatch.$(OBJEXT) \
+	fmt_ptime.$(OBJEXT)
+__build_prefix__svlogd_OBJECTS = $(am___build_prefix__svlogd_OBJECTS)
+__build_prefix__svlogd_DEPENDENCIES =
+__build_prefix__svlogd_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__svlogd_LDFLAGS) $(LDFLAGS) -o $@
+am___build_prefix__utmpset_OBJECTS = utmpset.$(OBJEXT)
+__build_prefix__utmpset_OBJECTS =  \
+	$(am___build_prefix__utmpset_OBJECTS)
+__build_prefix__utmpset_DEPENDENCIES =
+__build_prefix__utmpset_LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(__build_prefix__utmpset_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_P = $(am__v_P_$(V))
+am__v_P_ = $(am__v_P_$(AM_DEFAULT_VERBOSITY))
+am__v_P_0 = false
+am__v_P_1 = :
+AM_V_GEN = $(am__v_GEN_$(V))
+am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
+am__v_GEN_0 = @echo "  GEN     " $@;
+am__v_GEN_1 = 
+AM_V_at = $(am__v_at_$(V))
+am__v_at_ = $(am__v_at_$(AM_DEFAULT_VERBOSITY))
+am__v_at_0 = @
+am__v_at_1 = 
+DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)
+depcomp = $(SHELL) $(top_srcdir)/depcomp
+am__maybe_remake_depfiles = depfiles
+am__depfiles_remade = ./$(DEPDIR)/alloc.Po ./$(DEPDIR)/alloc_re.Po \
+	./$(DEPDIR)/buffer.Po ./$(DEPDIR)/buffer_0.Po \
+	./$(DEPDIR)/buffer_1.Po ./$(DEPDIR)/buffer_2.Po \
+	./$(DEPDIR)/buffer_get.Po ./$(DEPDIR)/buffer_put.Po \
+	./$(DEPDIR)/buffer_read.Po ./$(DEPDIR)/buffer_write.Po \
+	./$(DEPDIR)/byte_chr.Po ./$(DEPDIR)/byte_copy.Po \
+	./$(DEPDIR)/byte_cr.Po ./$(DEPDIR)/byte_diff.Po \
+	./$(DEPDIR)/byte_rchr.Po ./$(DEPDIR)/chpst.Po \
+	./$(DEPDIR)/coe.Po ./$(DEPDIR)/env.Po ./$(DEPDIR)/error.Po \
+	./$(DEPDIR)/error_str.Po ./$(DEPDIR)/fd_copy.Po \
+	./$(DEPDIR)/fd_move.Po ./$(DEPDIR)/fifo.Po \
+	./$(DEPDIR)/fmt_ptime.Po ./$(DEPDIR)/fmt_uint.Po \
+	./$(DEPDIR)/fmt_uint0.Po ./$(DEPDIR)/fmt_ulong.Po \
+	./$(DEPDIR)/iopause.Po ./$(DEPDIR)/lock_ex.Po \
+	./$(DEPDIR)/lock_exnb.Po ./$(DEPDIR)/ndelay_off.Po \
+	./$(DEPDIR)/ndelay_on.Po ./$(DEPDIR)/open_append.Po \
+	./$(DEPDIR)/open_read.Po ./$(DEPDIR)/open_trunc.Po \
+	./$(DEPDIR)/open_write.Po ./$(DEPDIR)/openreadclose.Po \
+	./$(DEPDIR)/pathexec_env.Po ./$(DEPDIR)/pathexec_run.Po \
+	./$(DEPDIR)/pmatch.Po ./$(DEPDIR)/prot.Po \
+	./$(DEPDIR)/readclose.Po ./$(DEPDIR)/runit-init.Po \
+	./$(DEPDIR)/runit.Po ./$(DEPDIR)/runsv.Po \
+	./$(DEPDIR)/runsvchdir.Po ./$(DEPDIR)/runsvdir.Po \
+	./$(DEPDIR)/scan_ulong.Po ./$(DEPDIR)/seek_set.Po \
+	./$(DEPDIR)/sgetopt.Po ./$(DEPDIR)/sig.Po \
+	./$(DEPDIR)/sig_block.Po ./$(DEPDIR)/sig_catch.Po \
+	./$(DEPDIR)/sig_pause.Po ./$(DEPDIR)/str_chr.Po \
+	./$(DEPDIR)/str_diff.Po ./$(DEPDIR)/str_len.Po \
+	./$(DEPDIR)/str_start.Po ./$(DEPDIR)/stralloc_cat.Po \
+	./$(DEPDIR)/stralloc_catb.Po ./$(DEPDIR)/stralloc_cats.Po \
+	./$(DEPDIR)/stralloc_eady.Po ./$(DEPDIR)/stralloc_opyb.Po \
+	./$(DEPDIR)/stralloc_opys.Po ./$(DEPDIR)/stralloc_pend.Po \
+	./$(DEPDIR)/strerr_die.Po ./$(DEPDIR)/strerr_sys.Po \
+	./$(DEPDIR)/subgetopt.Po ./$(DEPDIR)/sv.Po \
+	./$(DEPDIR)/svlogd.Po ./$(DEPDIR)/tai_now.Po \
+	./$(DEPDIR)/tai_pack.Po ./$(DEPDIR)/tai_sub.Po \
+	./$(DEPDIR)/tai_unpack.Po ./$(DEPDIR)/taia_add.Po \
+	./$(DEPDIR)/taia_approx.Po ./$(DEPDIR)/taia_frac.Po \
+	./$(DEPDIR)/taia_less.Po ./$(DEPDIR)/taia_now.Po \
+	./$(DEPDIR)/taia_pack.Po ./$(DEPDIR)/taia_sub.Po \
+	./$(DEPDIR)/taia_uint.Po ./$(DEPDIR)/uidgid.Po \
+	./$(DEPDIR)/utmpset.Po ./$(DEPDIR)/wait_nohang.Po \
+	./$(DEPDIR)/wait_pid.Po
+am__mv = mv -f
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_$(V))
+am__v_CC_ = $(am__v_CC_$(AM_DEFAULT_VERBOSITY))
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_$(V))
+am__v_CCLD_ = $(am__v_CCLD_$(AM_DEFAULT_VERBOSITY))
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
+SOURCES = $(__build_prefix__libbyte_a_SOURCES) \
+	$(nodist___build_prefix__libbyte_a_SOURCES) \
+	$(__build_prefix__libtime_a_SOURCES) \
+	$(nodist___build_prefix__libtime_a_SOURCES) \
+	$(__build_prefix__libunix_a_SOURCES) \
+	$(nodist___build_prefix__libunix_a_SOURCES) \
+	$(__build_prefix__chpst_SOURCES) \
+	$(__build_prefix__runit_SOURCES) \
+	$(__build_prefix__runit_init_SOURCES) \
+	$(__build_prefix__runsv_SOURCES) \
+	$(__build_prefix__runsvchdir_SOURCES) \
+	$(__build_prefix__runsvdir_SOURCES) \
+	$(__build_prefix__sv_SOURCES) \
+	$(__build_prefix__svlogd_SOURCES) \
+	$(__build_prefix__utmpset_SOURCES)
+DIST_SOURCES = $(__build_prefix__libbyte_a_SOURCES) \
+	$(__build_prefix__libtime_a_SOURCES) \
+	$(__build_prefix__libunix_a_SOURCES) \
+	$(__build_prefix__chpst_SOURCES) \
+	$(__build_prefix__runit_SOURCES) \
+	$(__build_prefix__runit_init_SOURCES) \
+	$(__build_prefix__runsv_SOURCES) \
+	$(__build_prefix__runsvchdir_SOURCES) \
+	$(__build_prefix__runsvdir_SOURCES) \
+	$(__build_prefix__sv_SOURCES) \
+	$(__build_prefix__svlogd_SOURCES) \
+	$(__build_prefix__utmpset_SOURCES)
+am__can_run_installinfo = \
+  case $$AM_UPDATE_INFO_DIR in \
+    n|no|NO) false;; \
+    *) (install-info --version) >/dev/null 2>&1;; \
+  esac
+am__extra_recursive_targets = check-valgrind-recursive \
+	check-valgrind-memcheck-recursive \
+	check-valgrind-helgrind-recursive check-valgrind-drd-recursive \
+	check-valgrind-sgcheck-recursive
+am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
+# Read a list of newline-separated strings from the standard input,
+# and print each of them once, without duplicates.  Input order is
+# *not* preserved.
+am__uniquify_input = $(AWK) '\
+  BEGIN { nonempty = 0; } \
+  { items[$$0] = 1; nonempty = 1; } \
+  END { if (nonempty) { for (i in items) print i; }; } \
+'
+# Make sure the list of sources is unique.  This is necessary because,
+# e.g., the same source file might be shared among _SOURCES variables
+# for different programs/libraries.
+am__define_uniq_tagged_files = \
+  list='$(am__tagged_files)'; \
+  unique=`for i in $$list; do \
+    if test -f "$$i"; then echo $$i; else echo $(srcdir)/$$i; fi; \
+  done | $(am__uniquify_input)`
+am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp compile
+DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
+ACLOCAL = ${SHELL} '/home/kro/wksp/runit-ac/missing' aclocal-1.16
+AMTAR = $${TAR-tar}
+AM_DEFAULT_VERBOSITY = 1
+AUTOCONF = ${SHELL} '/home/kro/wksp/runit-ac/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/kro/wksp/runit-ac/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/kro/wksp/runit-ac/missing' automake-1.16
+AWK = gawk
+CC = gcc
+CCDEPMODE = depmode=gcc3
+CFLAGS = -g -O2
+CPP = gcc -E
+CPPFLAGS = 
+CSCOPE = cscope
+CTAGS = ctags
+CXX = g++
+CXXDEPMODE = depmode=gcc3
+CXXFLAGS = -g -O2
+CYGPATH_W = echo
+DEFS = -DHAVE_CONFIG_H
+DEPDIR = .deps
+ECHO_C = 
+ECHO_N = -n
+ECHO_T = 
+EGREP = /usr/bin/grep -E
+ENABLE_VALGRIND_drd = yes
+ENABLE_VALGRIND_helgrind = yes
+ENABLE_VALGRIND_memcheck = yes
+ENABLE_VALGRIND_sgcheck = no
+ETAGS = etags
+EXEEXT = 
+GREP = /usr/bin/grep
+INSTALL = /usr/bin/install -c
+INSTALL_DATA = ${INSTALL} -m 644
+INSTALL_PROGRAM = ${INSTALL}
+INSTALL_SCRIPT = ${INSTALL}
+INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
+LDFLAGS = 
+LIBOBJS = 
+LIBS = 
+LTLIBOBJS = 
+MAKEINFO = ${SHELL} '/home/kro/wksp/runit-ac/missing' makeinfo
+MKDIR_P = /usr/bin/mkdir -p
+OBJEXT = o
+PACKAGE = runit
+PACKAGE_BUGREPORT = bugs@kara-online.net
+PACKAGE_NAME = runit
+PACKAGE_STRING = runit 0.1.0
+PACKAGE_TARNAME = runit
+PACKAGE_URL = 
+PACKAGE_VERSION = 0.1.0
+PATH_SEPARATOR = :
+RANLIB = ranlib
+SET_MAKE = 
+SHELL = /bin/sh
+STRIP = 
+VALGRIND = valgrind
+VALGRIND_ENABLED = yes
+VERSION = 0.1.0
+WARN_CFLAGS = -W -Wall -Wunused -Werror
+abs_builddir = /home/kro/wksp/runit-ac/src
+abs_srcdir = /home/kro/wksp/runit-ac/src/..
+abs_top_builddir = /home/kro/wksp/runit-ac/src
+abs_top_srcdir = /home/kro/wksp/runit-ac/src/..
+ac_ct_CC = gcc
+ac_ct_CXX = g++
+am__include = include
+am__leading_dot = .
+am__quote = 
+am__tar = $${TAR-tar} chof - "$$tardir"
+am__untar = $${TAR-tar} xf -
+bindir = ${exec_prefix}/bin
+build = x86_64-pc-linux-gnu
+build_alias = 
+build_cpu = x86_64
+build_os = linux-gnu
+build_vendor = pc
+builddir = .
+datadir = ${datarootdir}
+datarootdir = ${prefix}/share
+docdir = ${datarootdir}/doc/${PACKAGE_TARNAME}
+dvidir = ${docdir}
+exec_prefix = ${prefix}
+host = x86_64-pc-linux-gnu
+host_alias = 
+host_cpu = x86_64
+host_os = linux-gnu
+host_vendor = pc
+htmldir = ${docdir}
+includedir = ${prefix}/include
+infodir = ${datarootdir}/info
+install_sh = ${SHELL} /home/kro/wksp/runit-ac/install-sh
+libdir = ${exec_prefix}/lib
+libexecdir = ${exec_prefix}/libexec
+localedir = ${datarootdir}/locale
+localstatedir = ${prefix}/var
+mandir = ${datarootdir}/man
+mkdir_p = $(MKDIR_P)
+oldincludedir = /usr/include
+pdfdir = ${docdir}
+prefix = /usr/local
+program_transform_name = s,x,x,
+psdir = ${docdir}
+runstatedir = ${localstatedir}/run
+sbindir = ${exec_prefix}/sbin
+sharedstatedir = ${prefix}/com
+srcdir = ..
+sysconfdir = ${prefix}/etc
+target_alias = 
+top_build_prefix = 
+top_builddir = .
+top_srcdir = ..
+valgrind_enabled_tools =  memcheck helgrind drd
+valgrind_tools = memcheck helgrind drd sgcheck
+AM_CFLAGS = $(WARN_CFLAGS) -Wall
+build_prefix = $(top_builddir)/bin
+noinst_LIBRARIES = $(build_prefix)/libunix.a \
+		   $(build_prefix)/libbyte.a \
+		   $(build_prefix)/libtime.a
+
+
+#include_HEADERS = library.h
+__build_prefix__libunix_a_SOURCES = alloc.c alloc_re.c buffer.c buffer_0.c buffer_1.c buffer_2.c buffer_get.c buffer_put.c buffer_read.c buffer_write.c coe.c env.c error.c error_str.c fd_copy.c fd_move.c fifo.c lock_ex.c lock_exnb.c ndelay_off.c ndelay_on.c open_append.c open_read.c open_trunc.c open_write.c openreadclose.c pathexec_env.c pathexec_run.c prot.c readclose.c seek_set.c sgetopt.c sig.c sig_block.c sig_catch.c sig_pause.c stralloc_cat.c stralloc_catb.c stralloc_cats.c stralloc_eady.c stralloc_opyb.c stralloc_opys.c stralloc_pend.c strerr_die.c strerr_sys.c subgetopt.c wait_nohang.c wait_pid.c
+nodist___build_prefix__libunix_a_SOURCES = alloc.h buffer.h byte.h coe.h env.h error.h fd.h fifo.h gen_alloc.h gen_allocdefs.h lock.h ndelay.h open.h pathexec.h prot.h readclose.h seek.h sgetopt.h sig.h str.h stralloc.h strerr.h subgetopt.h
+__build_prefix__libbyte_a_SOURCES = byte_chr.c byte_copy.c byte_cr.c byte_diff.c byte_rchr.c fmt_uint.c fmt_uint0.c fmt_ulong.c scan_ulong.c str_chr.c str_diff.c str_len.c str_start.c
+nodist___build_prefix__libbyte_a_SOURCES = byte.h fmt.h scan.h str.h
+__build_prefix__libtime_a_SOURCES = iopause.c tai_now.c tai_pack.c tai_sub.c tai_unpack.c taia_add.c taia_approx.c taia_frac.c taia_less.c taia_now.c taia_pack.c taia_sub.c taia_uint.c
+nodist___build_prefix__libtime_a_SOURCES = iopause.h select.h tai.h taia.h
+__build_prefix__chpst_SOURCES = chpst.c uidgid.c
+__build_prefix__chpst_LDFLAGS = libunix.a libbyte.a
+__build_prefix__chpst_LDADD = 
+__build_prefix__runit_SOURCES = runit.c
+__build_prefix__runit_LDFLAGS = libunix.a libbyte.a -static
+__build_prefix__runit_LDADD = 
+__build_prefix__runit_init_SOURCES = runit-init.c
+__build_prefix__runit_init_LDFLAGS = libunix.a libbyte.a -static
+__build_prefix__runit_init_LDADD = 
+__build_prefix__runsv_SOURCES = runsv.c
+__build_prefix__runsv_LDFLAGS = libunix.a libbyte.a libtime.a
+__build_prefix__runsv_LDADD = 
+__build_prefix__runsvchdir_SOURCES = runsvchdir.c
+__build_prefix__runsvchdir_LDFLAGS = libunix.a libbyte.a
+__build_prefix__runsvchdir_LDADD = 
+__build_prefix__runsvdir_SOURCES = runsvdir.c
+__build_prefix__runsvdir_LDFLAGS = libunix.a libbyte.a libtime.a
+__build_prefix__runsvdir_LDADD = 
+__build_prefix__sv_SOURCES = sv.c
+__build_prefix__sv_LDFLAGS = libunix.a libbyte.a libtime.a
+__build_prefix__sv_LDADD = 
+__build_prefix__svlogd_SOURCES = svlogd.c pmatch.c fmt_ptime.c
+# TODO: socket libs can be one of '', '-lxnet', and '-lsocket -lnsl'. Figure out how to switch between them.
+__build_prefix__svlogd_LDFLAGS = libunix.a libbyte.a libtime.a
+__build_prefix__svlogd_LDADD = 
+__build_prefix__utmpset_SOURCES = utmpset.c
+__build_prefix__utmpset_LDFLAGS = libunix.a libbyte.a
+__build_prefix__utmpset_LDADD = 
+all: all-am
+
+.SUFFIXES:
+.SUFFIXES: .c .o .obj
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
+	@for dep in $?; do \
+	  case '$(am__configure_deps)' in \
+	    *$$dep*) \
+	      ( cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh ) \
+	        && { if test -f $@; then exit 0; else break; fi; }; \
+	      exit 1;; \
+	  esac; \
+	done; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign src/Makefile'; \
+	$(am__cd) $(top_srcdir) && \
+	  $(AUTOMAKE) --foreign src/Makefile
+Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
+	@case '$?' in \
+	  *config.status*) \
+	    cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh;; \
+	  *) \
+	    echo ' cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__maybe_remake_depfiles)'; \
+	    cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@ $(am__maybe_remake_depfiles);; \
+	esac;
+
+$(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
+	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+
+$(top_srcdir)/configure:  $(am__configure_deps)
+	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
+	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
+$(am__aclocal_m4_deps):
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	if test -n "$$list"; then \
+	  echo " $(MKDIR_P) '$(DESTDIR)$(bindir)'"; \
+	  $(MKDIR_P) "$(DESTDIR)$(bindir)" || exit 1; \
+	fi; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p \
+	  ; then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' \
+	    -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	      echo " $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	      $(INSTALL_PROGRAM_ENV) $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' \
+	`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	-test -z "$(bin_PROGRAMS)" || rm -f $(bin_PROGRAMS)
+
+clean-noinstLIBRARIES:
+	-test -z "$(noinst_LIBRARIES)" || rm -f $(noinst_LIBRARIES)
+$(build_prefix)/$(am__dirstamp):
+	@$(MKDIR_P) $(build_prefix)
+	@: > $(build_prefix)/$(am__dirstamp)
+
+$(build_prefix)/libbyte.a: $(__build_prefix__libbyte_a_OBJECTS) $(__build_prefix__libbyte_a_DEPENDENCIES) $(EXTRA___build_prefix__libbyte_a_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	$(AM_V_at)-rm -f $(build_prefix)/libbyte.a
+	$(AM_V_AR)$(__build_prefix__libbyte_a_AR) $(build_prefix)/libbyte.a $(__build_prefix__libbyte_a_OBJECTS) $(__build_prefix__libbyte_a_LIBADD)
+	$(AM_V_at)$(RANLIB) $(build_prefix)/libbyte.a
+
+$(build_prefix)/libtime.a: $(__build_prefix__libtime_a_OBJECTS) $(__build_prefix__libtime_a_DEPENDENCIES) $(EXTRA___build_prefix__libtime_a_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	$(AM_V_at)-rm -f $(build_prefix)/libtime.a
+	$(AM_V_AR)$(__build_prefix__libtime_a_AR) $(build_prefix)/libtime.a $(__build_prefix__libtime_a_OBJECTS) $(__build_prefix__libtime_a_LIBADD)
+	$(AM_V_at)$(RANLIB) $(build_prefix)/libtime.a
+
+$(build_prefix)/libunix.a: $(__build_prefix__libunix_a_OBJECTS) $(__build_prefix__libunix_a_DEPENDENCIES) $(EXTRA___build_prefix__libunix_a_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	$(AM_V_at)-rm -f $(build_prefix)/libunix.a
+	$(AM_V_AR)$(__build_prefix__libunix_a_AR) $(build_prefix)/libunix.a $(__build_prefix__libunix_a_OBJECTS) $(__build_prefix__libunix_a_LIBADD)
+	$(AM_V_at)$(RANLIB) $(build_prefix)/libunix.a
+
+$(build_prefix)/chpst$(EXEEXT): $(__build_prefix__chpst_OBJECTS) $(__build_prefix__chpst_DEPENDENCIES) $(EXTRA___build_prefix__chpst_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/chpst$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__chpst_LINK) $(__build_prefix__chpst_OBJECTS) $(__build_prefix__chpst_LDADD) $(LIBS)
+
+$(build_prefix)/runit$(EXEEXT): $(__build_prefix__runit_OBJECTS) $(__build_prefix__runit_DEPENDENCIES) $(EXTRA___build_prefix__runit_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/runit$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__runit_LINK) $(__build_prefix__runit_OBJECTS) $(__build_prefix__runit_LDADD) $(LIBS)
+
+$(build_prefix)/runit-init$(EXEEXT): $(__build_prefix__runit_init_OBJECTS) $(__build_prefix__runit_init_DEPENDENCIES) $(EXTRA___build_prefix__runit_init_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/runit-init$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__runit_init_LINK) $(__build_prefix__runit_init_OBJECTS) $(__build_prefix__runit_init_LDADD) $(LIBS)
+
+$(build_prefix)/runsv$(EXEEXT): $(__build_prefix__runsv_OBJECTS) $(__build_prefix__runsv_DEPENDENCIES) $(EXTRA___build_prefix__runsv_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/runsv$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__runsv_LINK) $(__build_prefix__runsv_OBJECTS) $(__build_prefix__runsv_LDADD) $(LIBS)
+
+$(build_prefix)/runsvchdir$(EXEEXT): $(__build_prefix__runsvchdir_OBJECTS) $(__build_prefix__runsvchdir_DEPENDENCIES) $(EXTRA___build_prefix__runsvchdir_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/runsvchdir$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__runsvchdir_LINK) $(__build_prefix__runsvchdir_OBJECTS) $(__build_prefix__runsvchdir_LDADD) $(LIBS)
+
+$(build_prefix)/runsvdir$(EXEEXT): $(__build_prefix__runsvdir_OBJECTS) $(__build_prefix__runsvdir_DEPENDENCIES) $(EXTRA___build_prefix__runsvdir_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/runsvdir$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__runsvdir_LINK) $(__build_prefix__runsvdir_OBJECTS) $(__build_prefix__runsvdir_LDADD) $(LIBS)
+
+$(build_prefix)/sv$(EXEEXT): $(__build_prefix__sv_OBJECTS) $(__build_prefix__sv_DEPENDENCIES) $(EXTRA___build_prefix__sv_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/sv$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__sv_LINK) $(__build_prefix__sv_OBJECTS) $(__build_prefix__sv_LDADD) $(LIBS)
+
+$(build_prefix)/svlogd$(EXEEXT): $(__build_prefix__svlogd_OBJECTS) $(__build_prefix__svlogd_DEPENDENCIES) $(EXTRA___build_prefix__svlogd_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/svlogd$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__svlogd_LINK) $(__build_prefix__svlogd_OBJECTS) $(__build_prefix__svlogd_LDADD) $(LIBS)
+
+$(build_prefix)/utmpset$(EXEEXT): $(__build_prefix__utmpset_OBJECTS) $(__build_prefix__utmpset_DEPENDENCIES) $(EXTRA___build_prefix__utmpset_DEPENDENCIES) $(build_prefix)/$(am__dirstamp)
+	@rm -f $(build_prefix)/utmpset$(EXEEXT)
+	$(AM_V_CCLD)$(__build_prefix__utmpset_LINK) $(__build_prefix__utmpset_OBJECTS) $(__build_prefix__utmpset_LDADD) $(LIBS)
+
+mostlyclean-compile:
+	-rm -f *.$(OBJEXT)
+
+distclean-compile:
+	-rm -f *.tab.c
+
+include ./$(DEPDIR)/alloc.Po # am--include-marker
+include ./$(DEPDIR)/alloc_re.Po # am--include-marker
+include ./$(DEPDIR)/buffer.Po # am--include-marker
+include ./$(DEPDIR)/buffer_0.Po # am--include-marker
+include ./$(DEPDIR)/buffer_1.Po # am--include-marker
+include ./$(DEPDIR)/buffer_2.Po # am--include-marker
+include ./$(DEPDIR)/buffer_get.Po # am--include-marker
+include ./$(DEPDIR)/buffer_put.Po # am--include-marker
+include ./$(DEPDIR)/buffer_read.Po # am--include-marker
+include ./$(DEPDIR)/buffer_write.Po # am--include-marker
+include ./$(DEPDIR)/byte_chr.Po # am--include-marker
+include ./$(DEPDIR)/byte_copy.Po # am--include-marker
+include ./$(DEPDIR)/byte_cr.Po # am--include-marker
+include ./$(DEPDIR)/byte_diff.Po # am--include-marker
+include ./$(DEPDIR)/byte_rchr.Po # am--include-marker
+include ./$(DEPDIR)/chpst.Po # am--include-marker
+include ./$(DEPDIR)/coe.Po # am--include-marker
+include ./$(DEPDIR)/env.Po # am--include-marker
+include ./$(DEPDIR)/error.Po # am--include-marker
+include ./$(DEPDIR)/error_str.Po # am--include-marker
+include ./$(DEPDIR)/fd_copy.Po # am--include-marker
+include ./$(DEPDIR)/fd_move.Po # am--include-marker
+include ./$(DEPDIR)/fifo.Po # am--include-marker
+include ./$(DEPDIR)/fmt_ptime.Po # am--include-marker
+include ./$(DEPDIR)/fmt_uint.Po # am--include-marker
+include ./$(DEPDIR)/fmt_uint0.Po # am--include-marker
+include ./$(DEPDIR)/fmt_ulong.Po # am--include-marker
+include ./$(DEPDIR)/iopause.Po # am--include-marker
+include ./$(DEPDIR)/lock_ex.Po # am--include-marker
+include ./$(DEPDIR)/lock_exnb.Po # am--include-marker
+include ./$(DEPDIR)/ndelay_off.Po # am--include-marker
+include ./$(DEPDIR)/ndelay_on.Po # am--include-marker
+include ./$(DEPDIR)/open_append.Po # am--include-marker
+include ./$(DEPDIR)/open_read.Po # am--include-marker
+include ./$(DEPDIR)/open_trunc.Po # am--include-marker
+include ./$(DEPDIR)/open_write.Po # am--include-marker
+include ./$(DEPDIR)/openreadclose.Po # am--include-marker
+include ./$(DEPDIR)/pathexec_env.Po # am--include-marker
+include ./$(DEPDIR)/pathexec_run.Po # am--include-marker
+include ./$(DEPDIR)/pmatch.Po # am--include-marker
+include ./$(DEPDIR)/prot.Po # am--include-marker
+include ./$(DEPDIR)/readclose.Po # am--include-marker
+include ./$(DEPDIR)/runit-init.Po # am--include-marker
+include ./$(DEPDIR)/runit.Po # am--include-marker
+include ./$(DEPDIR)/runsv.Po # am--include-marker
+include ./$(DEPDIR)/runsvchdir.Po # am--include-marker
+include ./$(DEPDIR)/runsvdir.Po # am--include-marker
+include ./$(DEPDIR)/scan_ulong.Po # am--include-marker
+include ./$(DEPDIR)/seek_set.Po # am--include-marker
+include ./$(DEPDIR)/sgetopt.Po # am--include-marker
+include ./$(DEPDIR)/sig.Po # am--include-marker
+include ./$(DEPDIR)/sig_block.Po # am--include-marker
+include ./$(DEPDIR)/sig_catch.Po # am--include-marker
+include ./$(DEPDIR)/sig_pause.Po # am--include-marker
+include ./$(DEPDIR)/str_chr.Po # am--include-marker
+include ./$(DEPDIR)/str_diff.Po # am--include-marker
+include ./$(DEPDIR)/str_len.Po # am--include-marker
+include ./$(DEPDIR)/str_start.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_cat.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_catb.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_cats.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_eady.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_opyb.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_opys.Po # am--include-marker
+include ./$(DEPDIR)/stralloc_pend.Po # am--include-marker
+include ./$(DEPDIR)/strerr_die.Po # am--include-marker
+include ./$(DEPDIR)/strerr_sys.Po # am--include-marker
+include ./$(DEPDIR)/subgetopt.Po # am--include-marker
+include ./$(DEPDIR)/sv.Po # am--include-marker
+include ./$(DEPDIR)/svlogd.Po # am--include-marker
+include ./$(DEPDIR)/tai_now.Po # am--include-marker
+include ./$(DEPDIR)/tai_pack.Po # am--include-marker
+include ./$(DEPDIR)/tai_sub.Po # am--include-marker
+include ./$(DEPDIR)/tai_unpack.Po # am--include-marker
+include ./$(DEPDIR)/taia_add.Po # am--include-marker
+include ./$(DEPDIR)/taia_approx.Po # am--include-marker
+include ./$(DEPDIR)/taia_frac.Po # am--include-marker
+include ./$(DEPDIR)/taia_less.Po # am--include-marker
+include ./$(DEPDIR)/taia_now.Po # am--include-marker
+include ./$(DEPDIR)/taia_pack.Po # am--include-marker
+include ./$(DEPDIR)/taia_sub.Po # am--include-marker
+include ./$(DEPDIR)/taia_uint.Po # am--include-marker
+include ./$(DEPDIR)/uidgid.Po # am--include-marker
+include ./$(DEPDIR)/utmpset.Po # am--include-marker
+include ./$(DEPDIR)/wait_nohang.Po # am--include-marker
+include ./$(DEPDIR)/wait_pid.Po # am--include-marker
+
+$(am__depfiles_remade):
+	@$(MKDIR_P) $(@D)
+	@echo '# dummy' >$@-t && $(am__mv) $@-t $@
+
+am--depfiles: $(am__depfiles_remade)
+
+.c.o:
+	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+	$(am__mv) $$depbase.Tpo $$depbase.Po
+#	$(AM_V_CC)source='$<' object='$@' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(COMPILE) -c -o $@ $<
+
+.c.obj:
+	$(AM_V_CC)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+	$(COMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+	$(am__mv) $$depbase.Tpo $$depbase.Po
+#	$(AM_V_CC)source='$<' object='$@' libtool=no \
+#	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) \
+#	$(AM_V_CC_no)$(COMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+check-valgrind-local: 
+check-valgrind-memcheck-local: 
+check-valgrind-helgrind-local: 
+check-valgrind-drd-local: 
+check-valgrind-sgcheck-local: 
+
+ID: $(am__tagged_files)
+	$(am__define_uniq_tagged_files); mkid -fID $$unique
+tags: tags-am
+TAGS: tags
+
+tags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
+	set x; \
+	here=`pwd`; \
+	$(am__define_uniq_tagged_files); \
+	shift; \
+	if test -z "$(ETAGS_ARGS)$$*$$unique"; then :; else \
+	  test -n "$$unique" || unique=$$empty_fix; \
+	  if test $$# -gt 0; then \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      "$$@" $$unique; \
+	  else \
+	    $(ETAGS) $(ETAGSFLAGS) $(AM_ETAGSFLAGS) $(ETAGS_ARGS) \
+	      $$unique; \
+	  fi; \
+	fi
+ctags: ctags-am
+
+CTAGS: ctags
+ctags-am: $(TAGS_DEPENDENCIES) $(am__tagged_files)
+	$(am__define_uniq_tagged_files); \
+	test -z "$(CTAGS_ARGS)$$unique" \
+	  || $(CTAGS) $(CTAGSFLAGS) $(AM_CTAGSFLAGS) $(CTAGS_ARGS) \
+	     $$unique
+
+GTAGS:
+	here=`$(am__cd) $(top_builddir) && pwd` \
+	  && $(am__cd) $(top_srcdir) \
+	  && gtags -i $(GTAGS_ARGS) "$$here"
+cscopelist: cscopelist-am
+
+cscopelist-am: $(am__tagged_files)
+	list='$(am__tagged_files)'; \
+	case "$(srcdir)" in \
+	  [\\/]* | ?:[\\/]*) sdir="$(srcdir)" ;; \
+	  *) sdir=$(subdir)/$(srcdir) ;; \
+	esac; \
+	for i in $$list; do \
+	  if test -f "$$i"; then \
+	    echo "$(subdir)/$$i"; \
+	  else \
+	    echo "$$sdir/$$i"; \
+	  fi; \
+	done >> $(top_builddir)/cscope.files
+
+distclean-tags:
+	-rm -f TAGS ID GTAGS GRTAGS GSYMS GPATH tags
+distdir: $(BUILT_SOURCES)
+	$(MAKE) $(AM_MAKEFLAGS) distdir-am
+
+distdir-am: $(DISTFILES)
+	@srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
+	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's/[].[^$$\\*]/\\\\&/g'`; \
+	list='$(DISTFILES)'; \
+	  dist_files=`for file in $$list; do echo $$file; done | \
+	  sed -e "s|^$$srcdirstrip/||;t" \
+	      -e "s|^$$topsrcdirstrip/|$(top_builddir)/|;t"`; \
+	case $$dist_files in \
+	  */*) $(MKDIR_P) `echo "$$dist_files" | \
+			   sed '/\//!d;s|^|$(distdir)/|;s,/[^/]*$$,,' | \
+			   sort -u` ;; \
+	esac; \
+	for file in $$dist_files; do \
+	  if test -f $$file || test -d $$file; then d=.; else d=$(srcdir); fi; \
+	  if test -d $$d/$$file; then \
+	    dir=`echo "/$$file" | sed -e 's,/[^/]*$$,,'`; \
+	    if test -d "$(distdir)/$$file"; then \
+	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
+	    fi; \
+	    if test -d $(srcdir)/$$file && test $$d != $(srcdir); then \
+	      cp -fpR $(srcdir)/$$file "$(distdir)$$dir" || exit 1; \
+	      find "$(distdir)/$$file" -type d ! -perm -700 -exec chmod u+rwx {} \;; \
+	    fi; \
+	    cp -fpR $$d/$$file "$(distdir)$$dir" || exit 1; \
+	  else \
+	    test -f "$(distdir)/$$file" \
+	    || cp -p $$d/$$file "$(distdir)/$$file" \
+	    || exit 1; \
+	  fi; \
+	done
+check-am: all-am
+check: check-am
+all-am: Makefile $(PROGRAMS) $(LIBRARIES)
+installdirs:
+	for dir in "$(DESTDIR)$(bindir)"; do \
+	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
+	done
+install: install-am
+install-exec: install-exec-am
+install-data: install-data-am
+uninstall: uninstall-am
+
+install-am: all-am
+	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
+
+installcheck: installcheck-am
+install-strip:
+	if test -z '$(STRIP)'; then \
+	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
+	    install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
+	      install; \
+	else \
+	  $(MAKE) $(AM_MAKEFLAGS) INSTALL_PROGRAM="$(INSTALL_STRIP_PROGRAM)" \
+	    install_sh_PROGRAM="$(INSTALL_STRIP_PROGRAM)" INSTALL_STRIP_FLAG=-s \
+	    "INSTALL_PROGRAM_ENV=STRIPPROG='$(STRIP)'" install; \
+	fi
+mostlyclean-generic:
+
+clean-generic:
+
+distclean-generic:
+	-test -z "$(CONFIG_CLEAN_FILES)" || rm -f $(CONFIG_CLEAN_FILES)
+	-test . = "$(srcdir)" || test -z "$(CONFIG_CLEAN_VPATH_FILES)" || rm -f $(CONFIG_CLEAN_VPATH_FILES)
+	-test -z "$(build_prefix)/$(am__dirstamp)" || rm -f $(build_prefix)/$(am__dirstamp)
+
+maintainer-clean-generic:
+	@echo "This command is intended for maintainers to use"
+	@echo "it deletes files that may require special tools to rebuild."
+check-valgrind: check-valgrind-am
+
+check-valgrind-am: check-valgrind-local
+
+check-valgrind-drd: check-valgrind-drd-am
+
+check-valgrind-drd-am: check-valgrind-drd-local
+
+check-valgrind-helgrind: check-valgrind-helgrind-am
+
+check-valgrind-helgrind-am: check-valgrind-helgrind-local
+
+check-valgrind-memcheck: check-valgrind-memcheck-am
+
+check-valgrind-memcheck-am: check-valgrind-memcheck-local
+
+check-valgrind-sgcheck: check-valgrind-sgcheck-am
+
+check-valgrind-sgcheck-am: check-valgrind-sgcheck-local
+
+clean: clean-am
+
+clean-am: clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
+	mostlyclean-am
+
+distclean: distclean-am
+		-rm -f ./$(DEPDIR)/alloc.Po
+	-rm -f ./$(DEPDIR)/alloc_re.Po
+	-rm -f ./$(DEPDIR)/buffer.Po
+	-rm -f ./$(DEPDIR)/buffer_0.Po
+	-rm -f ./$(DEPDIR)/buffer_1.Po
+	-rm -f ./$(DEPDIR)/buffer_2.Po
+	-rm -f ./$(DEPDIR)/buffer_get.Po
+	-rm -f ./$(DEPDIR)/buffer_put.Po
+	-rm -f ./$(DEPDIR)/buffer_read.Po
+	-rm -f ./$(DEPDIR)/buffer_write.Po
+	-rm -f ./$(DEPDIR)/byte_chr.Po
+	-rm -f ./$(DEPDIR)/byte_copy.Po
+	-rm -f ./$(DEPDIR)/byte_cr.Po
+	-rm -f ./$(DEPDIR)/byte_diff.Po
+	-rm -f ./$(DEPDIR)/byte_rchr.Po
+	-rm -f ./$(DEPDIR)/chpst.Po
+	-rm -f ./$(DEPDIR)/coe.Po
+	-rm -f ./$(DEPDIR)/env.Po
+	-rm -f ./$(DEPDIR)/error.Po
+	-rm -f ./$(DEPDIR)/error_str.Po
+	-rm -f ./$(DEPDIR)/fd_copy.Po
+	-rm -f ./$(DEPDIR)/fd_move.Po
+	-rm -f ./$(DEPDIR)/fifo.Po
+	-rm -f ./$(DEPDIR)/fmt_ptime.Po
+	-rm -f ./$(DEPDIR)/fmt_uint.Po
+	-rm -f ./$(DEPDIR)/fmt_uint0.Po
+	-rm -f ./$(DEPDIR)/fmt_ulong.Po
+	-rm -f ./$(DEPDIR)/iopause.Po
+	-rm -f ./$(DEPDIR)/lock_ex.Po
+	-rm -f ./$(DEPDIR)/lock_exnb.Po
+	-rm -f ./$(DEPDIR)/ndelay_off.Po
+	-rm -f ./$(DEPDIR)/ndelay_on.Po
+	-rm -f ./$(DEPDIR)/open_append.Po
+	-rm -f ./$(DEPDIR)/open_read.Po
+	-rm -f ./$(DEPDIR)/open_trunc.Po
+	-rm -f ./$(DEPDIR)/open_write.Po
+	-rm -f ./$(DEPDIR)/openreadclose.Po
+	-rm -f ./$(DEPDIR)/pathexec_env.Po
+	-rm -f ./$(DEPDIR)/pathexec_run.Po
+	-rm -f ./$(DEPDIR)/pmatch.Po
+	-rm -f ./$(DEPDIR)/prot.Po
+	-rm -f ./$(DEPDIR)/readclose.Po
+	-rm -f ./$(DEPDIR)/runit-init.Po
+	-rm -f ./$(DEPDIR)/runit.Po
+	-rm -f ./$(DEPDIR)/runsv.Po
+	-rm -f ./$(DEPDIR)/runsvchdir.Po
+	-rm -f ./$(DEPDIR)/runsvdir.Po
+	-rm -f ./$(DEPDIR)/scan_ulong.Po
+	-rm -f ./$(DEPDIR)/seek_set.Po
+	-rm -f ./$(DEPDIR)/sgetopt.Po
+	-rm -f ./$(DEPDIR)/sig.Po
+	-rm -f ./$(DEPDIR)/sig_block.Po
+	-rm -f ./$(DEPDIR)/sig_catch.Po
+	-rm -f ./$(DEPDIR)/sig_pause.Po
+	-rm -f ./$(DEPDIR)/str_chr.Po
+	-rm -f ./$(DEPDIR)/str_diff.Po
+	-rm -f ./$(DEPDIR)/str_len.Po
+	-rm -f ./$(DEPDIR)/str_start.Po
+	-rm -f ./$(DEPDIR)/stralloc_cat.Po
+	-rm -f ./$(DEPDIR)/stralloc_catb.Po
+	-rm -f ./$(DEPDIR)/stralloc_cats.Po
+	-rm -f ./$(DEPDIR)/stralloc_eady.Po
+	-rm -f ./$(DEPDIR)/stralloc_opyb.Po
+	-rm -f ./$(DEPDIR)/stralloc_opys.Po
+	-rm -f ./$(DEPDIR)/stralloc_pend.Po
+	-rm -f ./$(DEPDIR)/strerr_die.Po
+	-rm -f ./$(DEPDIR)/strerr_sys.Po
+	-rm -f ./$(DEPDIR)/subgetopt.Po
+	-rm -f ./$(DEPDIR)/sv.Po
+	-rm -f ./$(DEPDIR)/svlogd.Po
+	-rm -f ./$(DEPDIR)/tai_now.Po
+	-rm -f ./$(DEPDIR)/tai_pack.Po
+	-rm -f ./$(DEPDIR)/tai_sub.Po
+	-rm -f ./$(DEPDIR)/tai_unpack.Po
+	-rm -f ./$(DEPDIR)/taia_add.Po
+	-rm -f ./$(DEPDIR)/taia_approx.Po
+	-rm -f ./$(DEPDIR)/taia_frac.Po
+	-rm -f ./$(DEPDIR)/taia_less.Po
+	-rm -f ./$(DEPDIR)/taia_now.Po
+	-rm -f ./$(DEPDIR)/taia_pack.Po
+	-rm -f ./$(DEPDIR)/taia_sub.Po
+	-rm -f ./$(DEPDIR)/taia_uint.Po
+	-rm -f ./$(DEPDIR)/uidgid.Po
+	-rm -f ./$(DEPDIR)/utmpset.Po
+	-rm -f ./$(DEPDIR)/wait_nohang.Po
+	-rm -f ./$(DEPDIR)/wait_pid.Po
+	-rm -f Makefile
+distclean-am: clean-am distclean-compile distclean-generic \
+	distclean-tags
+
+dvi: dvi-am
+
+dvi-am:
+
+html: html-am
+
+html-am:
+
+info: info-am
+
+info-am:
+
+install-data-am:
+
+install-dvi: install-dvi-am
+
+install-dvi-am:
+
+install-exec-am: install-binPROGRAMS
+
+install-html: install-html-am
+
+install-html-am:
+
+install-info: install-info-am
+
+install-info-am:
+
+install-man:
+
+install-pdf: install-pdf-am
+
+install-pdf-am:
+
+install-ps: install-ps-am
+
+install-ps-am:
+
+installcheck-am:
+
+maintainer-clean: maintainer-clean-am
+		-rm -f ./$(DEPDIR)/alloc.Po
+	-rm -f ./$(DEPDIR)/alloc_re.Po
+	-rm -f ./$(DEPDIR)/buffer.Po
+	-rm -f ./$(DEPDIR)/buffer_0.Po
+	-rm -f ./$(DEPDIR)/buffer_1.Po
+	-rm -f ./$(DEPDIR)/buffer_2.Po
+	-rm -f ./$(DEPDIR)/buffer_get.Po
+	-rm -f ./$(DEPDIR)/buffer_put.Po
+	-rm -f ./$(DEPDIR)/buffer_read.Po
+	-rm -f ./$(DEPDIR)/buffer_write.Po
+	-rm -f ./$(DEPDIR)/byte_chr.Po
+	-rm -f ./$(DEPDIR)/byte_copy.Po
+	-rm -f ./$(DEPDIR)/byte_cr.Po
+	-rm -f ./$(DEPDIR)/byte_diff.Po
+	-rm -f ./$(DEPDIR)/byte_rchr.Po
+	-rm -f ./$(DEPDIR)/chpst.Po
+	-rm -f ./$(DEPDIR)/coe.Po
+	-rm -f ./$(DEPDIR)/env.Po
+	-rm -f ./$(DEPDIR)/error.Po
+	-rm -f ./$(DEPDIR)/error_str.Po
+	-rm -f ./$(DEPDIR)/fd_copy.Po
+	-rm -f ./$(DEPDIR)/fd_move.Po
+	-rm -f ./$(DEPDIR)/fifo.Po
+	-rm -f ./$(DEPDIR)/fmt_ptime.Po
+	-rm -f ./$(DEPDIR)/fmt_uint.Po
+	-rm -f ./$(DEPDIR)/fmt_uint0.Po
+	-rm -f ./$(DEPDIR)/fmt_ulong.Po
+	-rm -f ./$(DEPDIR)/iopause.Po
+	-rm -f ./$(DEPDIR)/lock_ex.Po
+	-rm -f ./$(DEPDIR)/lock_exnb.Po
+	-rm -f ./$(DEPDIR)/ndelay_off.Po
+	-rm -f ./$(DEPDIR)/ndelay_on.Po
+	-rm -f ./$(DEPDIR)/open_append.Po
+	-rm -f ./$(DEPDIR)/open_read.Po
+	-rm -f ./$(DEPDIR)/open_trunc.Po
+	-rm -f ./$(DEPDIR)/open_write.Po
+	-rm -f ./$(DEPDIR)/openreadclose.Po
+	-rm -f ./$(DEPDIR)/pathexec_env.Po
+	-rm -f ./$(DEPDIR)/pathexec_run.Po
+	-rm -f ./$(DEPDIR)/pmatch.Po
+	-rm -f ./$(DEPDIR)/prot.Po
+	-rm -f ./$(DEPDIR)/readclose.Po
+	-rm -f ./$(DEPDIR)/runit-init.Po
+	-rm -f ./$(DEPDIR)/runit.Po
+	-rm -f ./$(DEPDIR)/runsv.Po
+	-rm -f ./$(DEPDIR)/runsvchdir.Po
+	-rm -f ./$(DEPDIR)/runsvdir.Po
+	-rm -f ./$(DEPDIR)/scan_ulong.Po
+	-rm -f ./$(DEPDIR)/seek_set.Po
+	-rm -f ./$(DEPDIR)/sgetopt.Po
+	-rm -f ./$(DEPDIR)/sig.Po
+	-rm -f ./$(DEPDIR)/sig_block.Po
+	-rm -f ./$(DEPDIR)/sig_catch.Po
+	-rm -f ./$(DEPDIR)/sig_pause.Po
+	-rm -f ./$(DEPDIR)/str_chr.Po
+	-rm -f ./$(DEPDIR)/str_diff.Po
+	-rm -f ./$(DEPDIR)/str_len.Po
+	-rm -f ./$(DEPDIR)/str_start.Po
+	-rm -f ./$(DEPDIR)/stralloc_cat.Po
+	-rm -f ./$(DEPDIR)/stralloc_catb.Po
+	-rm -f ./$(DEPDIR)/stralloc_cats.Po
+	-rm -f ./$(DEPDIR)/stralloc_eady.Po
+	-rm -f ./$(DEPDIR)/stralloc_opyb.Po
+	-rm -f ./$(DEPDIR)/stralloc_opys.Po
+	-rm -f ./$(DEPDIR)/stralloc_pend.Po
+	-rm -f ./$(DEPDIR)/strerr_die.Po
+	-rm -f ./$(DEPDIR)/strerr_sys.Po
+	-rm -f ./$(DEPDIR)/subgetopt.Po
+	-rm -f ./$(DEPDIR)/sv.Po
+	-rm -f ./$(DEPDIR)/svlogd.Po
+	-rm -f ./$(DEPDIR)/tai_now.Po
+	-rm -f ./$(DEPDIR)/tai_pack.Po
+	-rm -f ./$(DEPDIR)/tai_sub.Po
+	-rm -f ./$(DEPDIR)/tai_unpack.Po
+	-rm -f ./$(DEPDIR)/taia_add.Po
+	-rm -f ./$(DEPDIR)/taia_approx.Po
+	-rm -f ./$(DEPDIR)/taia_frac.Po
+	-rm -f ./$(DEPDIR)/taia_less.Po
+	-rm -f ./$(DEPDIR)/taia_now.Po
+	-rm -f ./$(DEPDIR)/taia_pack.Po
+	-rm -f ./$(DEPDIR)/taia_sub.Po
+	-rm -f ./$(DEPDIR)/taia_uint.Po
+	-rm -f ./$(DEPDIR)/uidgid.Po
+	-rm -f ./$(DEPDIR)/utmpset.Po
+	-rm -f ./$(DEPDIR)/wait_nohang.Po
+	-rm -f ./$(DEPDIR)/wait_pid.Po
+	-rm -f Makefile
+maintainer-clean-am: distclean-am maintainer-clean-generic
+
+mostlyclean: mostlyclean-am
+
+mostlyclean-am: mostlyclean-compile mostlyclean-generic
+
+pdf: pdf-am
+
+pdf-am:
+
+ps: ps-am
+
+ps-am:
+
+uninstall-am: uninstall-binPROGRAMS
+
+.MAKE: install-am install-strip
+
+.PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am \
+	check-valgrind-am check-valgrind-drd-am \
+	check-valgrind-drd-local check-valgrind-helgrind-am \
+	check-valgrind-helgrind-local check-valgrind-local \
+	check-valgrind-memcheck-am check-valgrind-memcheck-local \
+	check-valgrind-sgcheck-am check-valgrind-sgcheck-local clean \
+	clean-binPROGRAMS clean-generic clean-noinstLIBRARIES \
+	cscopelist-am ctags ctags-am distclean distclean-compile \
+	distclean-generic distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic pdf pdf-am ps ps-am tags tags-am uninstall \
+	uninstall-am uninstall-binPROGRAMS
+
+.PRECIOUS: Makefile
+
+chpst: libunix.a libbyte.a
+
+# Tell versions [3.59,3.63) of GNU make to not export all variables.
+# Otherwise a system limit (for SysV at least) may be exceeded.
+.NOEXPORT:
