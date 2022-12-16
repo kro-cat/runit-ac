@@ -85,7 +85,7 @@ __bindir__sv_LDFLAGS =
 __bindir__sv_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a
 
 
-__bindir__svlogd_SOURCES = svlogd.c pmatch.c fmt_plibs/libtime.c
+__bindir__svlogd_SOURCES = svlogd.c pmatch.c fmt_ptime.c
 # TODO: socket s can be one of '', '-lxnet', and '-lsocket -lnsl'. Figure out how to switch between them.
 __bindir__svlogd_LDFLAGS =
 __bindir__svlogd_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a

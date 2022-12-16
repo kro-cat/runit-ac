@@ -222,7 +222,7 @@ void rmoldest(struct logdir *ld) {
   DIR *d;
   direntry *f;
   char oldest[FMT_PTIME];
-  int n =0;
+  unsigned int n =0;
 
   oldest[0] ='A'; oldest[1] =oldest[27] =0;
   while (! (d =opendir(".")))
@@ -308,19 +308,19 @@ unsigned int rotate(struct logdir *ld) {
 }
 
 int buffer_pwrite(int n, char *s, unsigned int len) {
-  int i;
+  unsigned int i;
 
   if ((dir +n)->sizemax) {
     if ((dir +n)->size >= (dir +n)->sizemax) rotate(dir +n);
     if (len > ((dir +n)->sizemax -(dir +n)->size))
       len =(dir +n)->sizemax -(dir +n)->size;
   }
-  while ((i =write((dir +n)->fdcur, s, len)) == -1) {
+  while ((i =write((dir +n)->fdcur, s, len)) == (unsigned int)-1) {
     if ((errno == ENOSPC) && ((dir +n)->nmin < (dir +n)->nmax)) {
       DIR *d;
       direntry *f;
       char oldest[FMT_PTIME];
-      int j =0;
+      unsigned int j =0;
 
       while (fchdir((dir +n)->fddir) == -1)
         pause2("unable to change directory, want remove old logfile",
@@ -390,18 +390,29 @@ unsigned int ip4_scan(const char *s,char ip[4])
   unsigned long u;
  
   len = 0;
-  i = scan_ulong(s,&u); if (!i) return 0; ip[0] = u; s += i; len += i;
-  if (*s != '.') return 0; ++s; ++len;
-  i = scan_ulong(s,&u); if (!i) return 0; ip[1] = u; s += i; len += i;
-  if (*s != '.') return 0; ++s; ++len;
-  i = scan_ulong(s,&u); if (!i) return 0; ip[2] = u; s += i; len += i;
-  if (*s != '.') return 0; ++s; ++len;
-  i = scan_ulong(s,&u); if (!i) return 0; ip[3] = u; s += i; len += i;
+  i = scan_ulong(s,&u);
+  if (!i) return 0;
+  ip[0] = u; s += i; len += i;
+  if (*s != '.') return 0;
+  ++s; ++len;
+  i = scan_ulong(s,&u);
+  if (!i) return 0;
+  ip[1] = u; s += i; len += i;
+  if (*s != '.') return 0;
+  ++s; ++len;
+  i = scan_ulong(s,&u);
+  if (!i) return 0;
+  ip[2] = u; s += i; len += i;
+  if (*s != '.') return 0;
+  ++s; ++len;
+  i = scan_ulong(s,&u);
+  if (!i) return 0;
+  ip[3] = u; s += i; len += i;
   return len;
 }
 
 unsigned int logdir_open(struct logdir *ld, const char *fn) {
-  int i;
+  unsigned int i;
 
   if ((ld->fddir =open_read(fn)) == -1) {
     warn2("unable to open log directory", (char*)fn);
@@ -437,7 +448,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn) {
   while (! stralloc_copys(&ld->processor, "")) pause_nomem();
 
   /* read config */
-  if ((i =openreadclose("config", &sa, 128)) == -1)
+  if ((i =openreadclose("config", &sa, 128)) == (unsigned int)-1)
     warn2("unable to read config", ld->name);
   if (i != 0) {
     int len, c;
@@ -461,6 +472,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn) {
       case 's':
         switch (sa.s[scan_ulong(&sa.s[i +1], &ld->sizemax) +i +1]) {
         case 'm': ld->sizemax *=1024;
+		  __attribute__((fallthrough));
         case 'k': ld->sizemax *=1024;
         }
         break;
@@ -474,6 +486,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn) {
         switch (sa.s[scan_ulong(&sa.s[i +1], &ld->tmax) +i +1]) {
         /* case 'd': ld->tmax *=24; */
         case 'h': ld->tmax *=60;
+		  __attribute__((fallthrough));
         case 'm': ld->tmax *=60;
         }
         if (ld->tmax) {
@@ -492,6 +505,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn) {
         break;
       case 'U':
         ld->udponly =1;
+	__attribute__((fallthrough));
       case 'u':
         if (! (c =ip4_scan(sa.s +i +1, (char *)&ld->udpaddr.sin_addr))) {
           warnx("unable to scan ip address", sa.s +i +1);
@@ -520,7 +534,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn) {
   }
 
   /* open current */
-  if ((i =stat("current", &st)) != -1) {
+  if ((i =stat("current", &st)) != (unsigned int)-1) {
     if (st.st_size && ! (st.st_mode & S_IXUSR)) {
       ld->fnsave[25] ='.'; ld->fnsave[26] ='u'; ld->fnsave[27] =0;
       do {
@@ -562,7 +576,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn) {
 }
 
 void logdirs_reopen(void) {
-  int l;
+  unsigned int l;
   int ok =0;
 
   tmaxflag =0;
@@ -575,7 +589,7 @@ void logdirs_reopen(void) {
 }
 
 int buffer_pread(int fd, char *s, unsigned int len) {
-  int i;
+  unsigned int i;
 
   for (i =0; i < dirn; ++i) buffer_flush(&dir[i].b);
   if (rotateasap) {
@@ -608,7 +622,7 @@ int buffer_pread(int fd, char *s, unsigned int len) {
   sig_block(sig_alarm);
   sig_block(sig_hangup);
   i =read(fd, s, len);
-  if (i == -1) {
+  if (i == (unsigned int)-1) {
     if (errno == error_again) errno =error_intr;
     if (errno != error_intr) warn("unable to read standard input");
   }
@@ -620,7 +634,8 @@ void sig_term_handler(void) {
   exitasap =1;
 }
 void sig_child_handler(void) {
-  int pid, l;
+  int pid;
+  unsigned int l;
 
   if (verbose) strerr_warn2(INFO, "sigchild received.", 0);
   while ((pid =wait_nohang(&wstat)) > 0)
@@ -641,7 +656,7 @@ void sig_hangup_handler(void) {
 }
 
 void logmatch(struct logdir *ld) {
-  int i;
+  unsigned int i;
 
   ld->match ='+';
   ld->matcherr ='E';
@@ -662,7 +677,7 @@ void logmatch(struct logdir *ld) {
   }
 }
 int main(int argc, const char **argv) {
-  int i;
+  unsigned int i;
   int opt;
 
   progname =*argv;
@@ -692,6 +707,7 @@ int main(int argc, const char **argv) {
       ++verbose;
       break;
     case 'V': strerr_warn1(VERSION, 0);
+	      __attribute__((fallthrough));
     case '?': usage();
     }
   }

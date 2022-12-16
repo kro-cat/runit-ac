@@ -41,7 +41,7 @@ void runit_reboot () {
   _exit(0);
 }
 
-int main (int argc, const char * const *argv, char * const *envp) {
+int main (__attribute__((unused)) int argc, __attribute__((unused)) const char * const *argv, char * const *envp) {
   const char *prog[2];
 
   progname =*argv++;
@@ -68,6 +68,7 @@ int main (int argc, const char * const *argv, char * const *envp) {
   case '-':
     if ((*argv)[1] == 'V')
       strerr_warn1("$Id: f075d98bf7dd17c893021f9572cbb970cdad8dcf $\n", 0);
+    __attribute__((fallthrough));
   default:
     usage();
   }

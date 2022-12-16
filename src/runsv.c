@@ -191,7 +191,7 @@ void update_status(struct svdir *s) {
     warn2("unable to open ", fstatusnew);
     return;
   }
-  if ((l =write(fd, status, sizeof status)) == -1) {
+  if ((l =write(fd, status, sizeof status)) == (unsigned long int)-1) {
     warn2("unable to write ", fstatusnew);
     close(fd);
     unlink(fstatusnew);
@@ -381,7 +381,7 @@ int ctrl(struct svdir *s, char c) {
   return(1);
 }
 
-int main(int argc, char **argv) {
+int main(__attribute__((unused)) int argc, char **argv) {
   struct stat s;
   int fd;
   int r;

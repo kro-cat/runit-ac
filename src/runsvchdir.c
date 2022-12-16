@@ -26,10 +26,10 @@ void warn(char *m1, char *m2) {
   strerr_warn5(progname, ": fatal: ", m1, m2, ": ", &strerr_sys);
 }
 
-int main (int argc, char **argv) {
+int main (__attribute__((unused)) int argc, char **argv) {
   struct stat s;
-  int dev;
-  int ino;
+  __dev_t dev;
+  __ino_t ino;
 
   progname =*argv++;
   if (! argv || ! *argv) usage();

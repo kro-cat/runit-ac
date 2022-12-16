@@ -159,7 +159,7 @@ int setup_log() {
   return(1);
 }
 
-int main(int argc, char **argv) {
+int main(__attribute__((unused)) int argc, char **argv) {
   struct stat s;
   time_t mtime =0;
   int wstat;
@@ -176,6 +176,7 @@ int main(int argc, char **argv) {
   if (**argv == '-') {
     switch (*(*argv +1)) {
     case 'P': pgrp =1;
+	      __attribute__((fallthrough));
     case '-': ++argv;
     }
     if (! argv || ! *argv) usage();

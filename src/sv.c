@@ -151,11 +151,15 @@ unsigned int svstatus_print(char *m) {
   if (pid && svstatus[18]) outs(", got TERM");
   return(pid ? 1 : 2);
 }
-int status(char *unused) {
+int status(__attribute__((unused)) char *unused) {
   int rc;
 
   rc =svstatus_get();
-  switch(rc) { case -1: if (lsb) done(4); case 0: return(0); }
+  switch(rc) {
+  case -1: if (lsb) done(4);
+           __attribute__((fallthrough));
+  case 0: return(0);
+  }
   rc =svstatus_print(*service);
   islog =1;
   if (chdir("log") == -1) {
@@ -171,7 +175,13 @@ int status(char *unused) {
   }
   islog =0;
   flush("");
-  if (lsb) switch(rc) { case 1: done(0); case 2: done(3); case 0: done(4); }
+  if (lsb) switch(rc) {
+  case 1: done(0);
+	  __attribute__((fallthrough));
+  case 2: done(3);
+	  __attribute__((fallthrough));
+  case 0: done(4);
+  }
   return(rc);
 }
 
@@ -261,7 +271,7 @@ int control(char *a) {
   }
   r =write(fd, a, str_len(a));
   close(fd);
-  if (r != str_len(a)) {
+  if (r != (int)str_len(a)) {
     warn("unable to write to supervise/control");
     return(-1);
   }
@@ -281,16 +291,19 @@ int main(int argc, char **argv) {
   lsb =(str_diff(progname, "sv"));
   if ((x =env_get("SVDIR"))) varservice =x;
   if ((x =env_get("SVWAIT"))) scan_ulong(x, &wait);
-  while ((i =getopt(argc, (const char* const*)argv, "w:vV")) != opteof) {
+  while ((i =getopt(argc, (const char* const*)argv, "w:vV")) != (unsigned int)opteof) {
     switch(i) {
     case 'w': scan_ulong(optarg, &wait);
+	      __attribute__((fallthrough));
     case 'v': verbose =1; break;
     case 'V': strerr_warn1(VERSION, 0);
+	      __attribute__((fallthrough));
     case '?': usage();
     }
   }
   argv +=optind; argc -=optind;
-  if (!(action =*argv++)) usage(); --argc;
+  if (!(action =*argv++)) usage();
+  --argc;
   if (!lsb) { service =argv; services =argc; }
   if (!*service) usage();
 
@@ -311,8 +324,10 @@ int main(int argc, char **argv) {
     acts ="tc"; kll =1; cbk =&check; break;
   case 't':
     if (!str_diff(action, "try-restart")) { acts ="tc"; cbk =&check; break; }
+    __attribute__((fallthrough));
   case 'c':
     if (!str_diff(action, "check")) { act =0; acts ="C"; cbk =&check; break; }
+    __attribute__((fallthrough));
   case 'u': case 'd': case 'o': case 'p': case 'h':
   case 'a': case 'i': case 'k': case 'q': case '1': case '2':
     action[1] =0; acts =action; break;
@@ -326,6 +341,7 @@ int main(int argc, char **argv) {
     if (!str_diff(action, "restart")) { acts ="tcu"; cbk =&check; break; }
     if (!str_diff(action, "reload")) { acts ="h"; cbk =&check; break; }
     usage();
+    __attribute__((fallthrough));
   case 'f':
     if (!str_diff(action, "force-reload"))
       { acts ="tc"; kll =1; cbk =&check; break; }
@@ -335,6 +351,7 @@ int main(int argc, char **argv) {
       { acts ="x"; kll =1; cbk =&check; break; }
     if (!str_diff(action, "force-stop"))
       { acts ="d"; kll =1; cbk =&check; break; }
+    __attribute__((fallthrough));
   default:
     usage();
   }
