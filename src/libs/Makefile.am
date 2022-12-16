@@ -1,3 +1,4 @@
+AM_CFLAGS = $(WARN_CFLAGS) -Wall -I$(top_srcdir)/include
 
 noinst_LIBRARIES= libunix.a libbyte.a libtime.a
 
