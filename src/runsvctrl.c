@@ -1,7 +1,7 @@
 #include <unistd.h>
-#include "strerr.h"
-#include "error.h"
-#include "open.h"
+#include <strerr.h>
+#include <error.h>
+#include <open.h>
 
 #define USAGE " u|d|o|p|c|h|a|i|q|1|2|t|k|x|e service ..."
 

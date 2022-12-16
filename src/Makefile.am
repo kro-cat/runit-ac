@@ -34,81 +34,65 @@
 #__top_builddir__bin_library_a_SOURCES = library.c
 #include_HEADERS = library.h
 
-AM_CFLAGS = $(WARN_CFLAGS) -Wall
-build_prefix = $(top_builddir)/bin
+AM_CFLAGS = $(WARN_CFLAGS) -Wall -I$(top_srcdir)/include
+bindir = $(top_builddir)/bin
 
-bin_PROGRAMS = $(build_prefix)/chpst \
-	       $(build_prefix)/runit \
-	       $(build_prefix)/runit-init \
-	       $(build_prefix)/runsv \
-	       $(build_prefix)/runsvchdir \
-	       $(build_prefix)/runsvdir \
-	       $(build_prefix)/sv \
-	       $(build_prefix)/svlogd \
-	       $(build_prefix)/utmpset
+bin_PROGRAMS = $(bindir)/chpst \
+	       $(bindir)/runit \
+	       $(bindir)/runit-init \
+	       $(bindir)/runsv \
+	       $(bindir)/runsvchdir \
+	       $(bindir)/runsvdir \
+	       $(bindir)/sv \
+	       $(bindir)/svlogd \
+	       $(bindir)/utmpset
 
-noinst_LIBRARIES = $(build_prefix)/libunix.a \
-		   $(build_prefix)/libbyte.a \
-		   $(build_prefix)/libtime.a
-
-#include_HEADERS = library.h
-
-__build_prefix__libunix_a_SOURCES = alloc.c alloc_re.c buffer.c buffer_0.c buffer_1.c buffer_2.c buffer_get.c buffer_put.c buffer_read.c buffer_write.c coe.c env.c error.c error_str.c fd_copy.c fd_move.c fifo.c lock_ex.c lock_exnb.c ndelay_off.c ndelay_on.c open_append.c open_read.c open_trunc.c open_write.c openreadclose.c pathexec_env.c pathexec_run.c prot.c readclose.c seek_set.c sgetopt.c sig.c sig_block.c sig_catch.c sig_pause.c stralloc_cat.c stralloc_catb.c stralloc_cats.c stralloc_eady.c stralloc_opyb.c stralloc_opys.c stralloc_pend.c strerr_die.c strerr_sys.c subgetopt.c wait_nohang.c wait_pid.c
-nodist___build_prefix__libunix_a_SOURCES = alloc.h buffer.h byte.h coe.h env.h error.h fd.h fifo.h gen_alloc.h gen_allocdefs.h lock.h ndelay.h open.h pathexec.h prot.h readclose.h seek.h sgetopt.h sig.h str.h stralloc.h strerr.h subgetopt.h
+SUBDIRS = libs
 
 
-__build_prefix__libbyte_a_SOURCES = byte_chr.c byte_copy.c byte_cr.c byte_diff.c byte_rchr.c fmt_uint.c fmt_uint0.c fmt_ulong.c scan_ulong.c str_chr.c str_diff.c str_len.c str_start.c
-nodist___build_prefix__libbyte_a_SOURCES = byte.h fmt.h scan.h str.h
+__bindir__chpst_SOURCES = chpst.c uidgid.c
+__bindir__chpst_LDFLAGS = libs/libunix.a libs/libbyte.a
+__bindir__chpst_LDADD =
 
 
-__build_prefix__libtime_a_SOURCES = iopause.c tai_now.c tai_pack.c tai_sub.c tai_unpack.c taia_add.c taia_approx.c taia_frac.c taia_less.c taia_now.c taia_pack.c taia_sub.c taia_uint.c
-nodist___build_prefix__libtime_a_SOURCES = iopause.h select.h tai.h taia.h
+__bindir__runit_SOURCES = runit.c
+__bindir__runit_LDFLAGS = libs/libunix.a libs/libbyte.a -static
+__bindir__runit_LDADD =
 
 
-__build_prefix__chpst_SOURCES = chpst.c uidgid.c
-chpst.$(OBJEXT): libunix.a libbyte.a
-__build_prefix__chpst_LDFLAGS = libunix.a libbyte.a
-__build_prefix__chpst_LDADD =
+__bindir__runit_init_SOURCES = runit-init.c
+__bindir__runit_init_LDFLAGS = libs/libunix.a libs/libbyte.a -static
+__bindir__runit_init_LDADD =
 
 
-__build_prefix__runit_SOURCES = runit.c
-__build_prefix__runit_LDFLAGS = libunix.a libbyte.a -static
-__build_prefix__runit_LDADD =
+__bindir__runsv_SOURCES = runsv.c
+__bindir__runsv_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
+__bindir__runsv_LDADD =
 
 
-__build_prefix__runit_init_SOURCES = runit-init.c
-__build_prefix__runit_init_LDFLAGS = libunix.a libbyte.a -static
-__build_prefix__runit_init_LDADD =
+__bindir__runsvchdir_SOURCES = runsvchdir.c
+__bindir__runsvchdir_LDFLAGS = libs/libunix.a libs/libbyte.a
+__bindir__runsvchdir_LDADD =
 
 
-__build_prefix__runsv_SOURCES = runsv.c
-__build_prefix__runsv_LDFLAGS = libunix.a libbyte.a libtime.a
-__build_prefix__runsv_LDADD =
+__bindir__runsvdir_SOURCES = runsvdir.c
+__bindir__runsvdir_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
+__bindir__runsvdir_LDADD =
 
 
-__build_prefix__runsvchdir_SOURCES = runsvchdir.c
-__build_prefix__runsvchdir_LDFLAGS = libunix.a libbyte.a
-__build_prefix__runsvchdir_LDADD =
+__bindir__sv_SOURCES = sv.c
+__bindir__sv_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
+__bindir__sv_LDADD =
 
 
-__build_prefix__runsvdir_SOURCES = runsvdir.c
-__build_prefix__runsvdir_LDFLAGS = libunix.a libbyte.a libtime.a
-__build_prefix__runsvdir_LDADD =
+__bindir__svlogd_SOURCES = svlogd.c pmatch.c fmt_plibs/libtime.c
+# TODO: socket s can be one of '', '-lxnet', and '-lsocket -lnsl'. Figure out how to switch between them.
+__bindir__svlogd_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
+__bindir__svlogd_LDADD =
 
 
-__build_prefix__sv_SOURCES = sv.c
-__build_prefix__sv_LDFLAGS = libunix.a libbyte.a libtime.a
-__build_prefix__sv_LDADD =
-
-
-__build_prefix__svlogd_SOURCES = svlogd.c pmatch.c fmt_ptime.c
-# TODO: socket libs can be one of '', '-lxnet', and '-lsocket -lnsl'. Figure out how to switch between them.
-__build_prefix__svlogd_LDFLAGS = libunix.a libbyte.a libtime.a
-__build_prefix__svlogd_LDADD =
-
-
-__build_prefix__utmpset_SOURCES = utmpset.c
-__build_prefix__utmpset_LDFLAGS = libunix.a libbyte.a
-__build_prefix__utmpset_LDADD =
+__bindir__utmpset_SOURCES = utmpset.c
+__bindir__utmpset_LDFLAGS = libs/libunix.a libs/libbyte.a
+__bindir__utmpset_LDADD =
 
 

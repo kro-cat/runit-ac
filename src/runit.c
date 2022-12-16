@@ -5,16 +5,16 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "runit.h"
-#include "sig.h"
-#include "strerr.h"
-#include "error.h"
-#include "iopause.h"
-#include "coe.h"
-#include "ndelay.h"
-#include "wait.h"
-#include "open.h"
-#include "reboot_system.h"
+#include <runit.h>
+#include <sig.h>
+#include <strerr.h>
+#include <error.h>
+#include <iopause.h>
+#include <coe.h>
+#include <ndelay.h>
+#include <wait.h>
+#include <open.h>
+#include <reboot_system.h>
 
 /* #define DEBUG */
 

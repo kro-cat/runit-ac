@@ -3,22 +3,22 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
-#include "strerr.h"
-#include "error.h"
-#include "taia.h"
-#include "sig.h"
-#include "env.h"
-#include "coe.h"
-#include "ndelay.h"
-#include "fifo.h"
-#include "open.h"
-#include "lock.h"
-#include "iopause.h"
-#include "wait.h"
-#include "fd.h"
-#include "buffer.h"
-#include "fmt.h"
-#include "byte.h"
+#include <strerr.h>
+#include <error.h>
+#include <taia.h>
+#include <sig.h>
+#include <env.h>
+#include <coe.h>
+#include <ndelay.h>
+#include <fifo.h>
+#include <open.h>
+#include <lock.h>
+#include <iopause.h>
+#include <wait.h>
+#include <fd.h>
+#include <buffer.h>
+#include <fmt.h>
+#include <byte.h>
 
 #define USAGE " dir"
 

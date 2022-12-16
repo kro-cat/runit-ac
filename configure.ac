@@ -168,6 +168,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
+  src/libs/Makefile
   tests/Makefile
   include/Makefile
 ])

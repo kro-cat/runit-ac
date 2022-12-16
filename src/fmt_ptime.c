@@ -1,6 +1,6 @@
 #include <time.h>
-#include "fmt_ptime.h"
-#include "fmt.h"
+#include <fmt_ptime.h>
+#include <fmt.h>
 
 unsigned int fmt_ptime2(char *s, struct taia *ta, char sep) {
   struct tm *t;

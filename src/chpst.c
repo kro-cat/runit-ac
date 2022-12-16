@@ -3,22 +3,22 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#include "sgetopt.h"
-#include "error.h"
-#include "strerr.h"
-#include "str.h"
-#include "uidgid.h"
-#include "prot.h"
-#include "strerr.h"
-#include "scan.h"
-#include "fmt.h"
-#include "lock.h"
-#include "pathexec.h"
-#include "stralloc.h"
-#include "byte.h"
-#include "open.h"
-#include "openreadclose.h"
-#include "direntry.h"
+#include <sgetopt.h>
+#include <error.h>
+#include <strerr.h>
+#include <str.h>
+#include <uidgid.h>
+#include <prot.h>
+#include <strerr.h>
+#include <scan.h>
+#include <fmt.h>
+#include <lock.h>
+#include <pathexec.h>
+#include <stralloc.h>
+#include <byte.h>
+#include <open.h>
+#include <openreadclose.h>
+#include <direntry.h>
 
 #define USAGE_MAIN " [-vP012] [-u user[:group]] [-U user[:group]] [-b argv0] [-e dir] [-/ root] [-n nice] [-l|-L lock] [-m n] [-d n] [-o n] [-p n] [-f n] [-c n] prog"
 #define FATAL "chpst: fatal: "

@@ -1,12 +1,12 @@
 #include <unistd.h>
-#include "strerr.h"
-#include "error.h"
-#include "sgetopt.h"
-#include "scan.h"
-#include "open.h"
-#include "tai.h"
-#include "buffer.h"
-#include "fmt.h"
+#include <strerr.h>
+#include <error.h>
+#include <sgetopt.h>
+#include <scan.h>
+#include <open.h>
+#include <tai.h>
+#include <buffer.h>
+#include <fmt.h>
 
 #define FATAL "svwaitup: fatal: "
 #define WARN "svwaitup: warning: "

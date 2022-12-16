@@ -4,14 +4,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
-#include "uw_tmp.h"
-#include "strerr.h"
-#include "sgetopt.h"
-#include "seek.h"
-#include "str.h"
-#include "open.h"
-#include "byte.h"
-#include "lock.h"
+#include <uw_tmp.h>
+#include <strerr.h>
+#include <sgetopt.h>
+#include <seek.h>
+#include <str.h>
+#include <open.h>
+#include <byte.h>
+#include <lock.h>
 
 #define USAGE " [-w] line"
 #define FATAL "utmpset: fatal: "

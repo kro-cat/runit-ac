@@ -2,11 +2,11 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <unistd.h>
-#include "runit.h"
-#include "strerr.h"
-#include "sig.h"
-#include "open.h"
-#include "error.h"
+#include <runit.h>
+#include <strerr.h>
+#include <sig.h>
+#include <open.h>
+#include <error.h>
 
 #define USAGE " 0|6"
 #define FATAL "init: fatal: "

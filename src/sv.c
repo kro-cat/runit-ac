@@ -1,18 +1,18 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include "str.h"
-#include "strerr.h"
-#include "error.h"
-#include "sgetopt.h"
-#include "open.h"
-#include "env.h"
-#include "buffer.h"
-#include "fmt.h"
-#include "scan.h"
-#include "tai.h"
-#include "taia.h"
-#include "wait.h"
+#include <str.h>
+#include <strerr.h>
+#include <error.h>
+#include <sgetopt.h>
+#include <open.h>
+#include <env.h>
+#include <buffer.h>
+#include <fmt.h>
+#include <scan.h>
+#include <tai.h>
+#include <taia.h>
+#include <wait.h>
 
 #define USAGE " [-v] [-w sec] command service ..."
 #define USAGELSB " [-w sec] command"
