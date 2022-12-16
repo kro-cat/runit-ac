@@ -5,7 +5,7 @@
 
 #include <time.h>
 #include <sys/time.h>
-#include "taia.h"
+#include <taia.h>
 
 extern unsigned int fmt_ptime(char *, struct taia *);
 extern unsigned int fmt_ptime_iso8601(char *, struct taia *);

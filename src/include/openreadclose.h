@@ -3,7 +3,7 @@
 #ifndef OPENREADCLOSE_H
 #define OPENREADCLOSE_H
 
-#include "stralloc.h"
+#include <stralloc.h>
 
 extern int openreadclose(const char *,stralloc *,unsigned int);
 

@@ -3,7 +3,7 @@
 #ifndef STRALLOC_H
 #define STRALLOC_H
 
-#include "gen_alloc.h"
+#include <gen_alloc.h>
 
 GEN_ALLOC_typedef(stralloc,char,s,len,a)
 

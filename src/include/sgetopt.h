@@ -14,7 +14,7 @@
 #define opteof subgetoptdone
 #endif
 
-#include "subgetopt.h"
+#include <subgetopt.h>
 
 extern int sgetoptmine(int,const char *const *,const char *);
 extern int sgetopterr;
