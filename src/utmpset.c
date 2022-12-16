@@ -23,6 +23,7 @@ void usage(void) { strerr_die4x(1, "usage: ", progname, USAGE, "\n"); }
 
 int utmp_logout(const char *line) {
   int fd;
+  time_t tb;
   uw_tmp ut;
   int ok =-1;
 
@@ -35,7 +36,8 @@ int utmp_logout(const char *line) {
     if (!ut.ut_name[0] || (str_diff(ut.ut_line, line) != 0)) continue;
     memset(ut.ut_name, 0, sizeof ut.ut_name);
     memset(ut.ut_host, 0, sizeof ut.ut_host);
-    if (time(&ut.ut_time) == -1) break;
+    tb = (time_t)ut.ut_time;
+    if (time(&tb) == -1) break;
 #ifdef DEAD_PROCESS
     ut.ut_type =DEAD_PROCESS;
 #endif
@@ -52,6 +54,7 @@ int wtmp_logout(const char *line) {
   int len;
   struct stat st;
   uw_tmp ut;
+  time_t tb;
 
   if ((fd = open_append(UW_TMP_WFILE)) == -1)
     strerr_die4sys(111, FATAL, "unable to open ", UW_TMP_WFILE, ": ");
@@ -63,9 +66,10 @@ int wtmp_logout(const char *line) {
     return(-1);
   }
   memset(&ut, 0, sizeof(uw_tmp));
-  if ((len =str_len(line)) > sizeof ut.ut_line) len =sizeof ut.ut_line -2;
+  if ((unsigned long int)(len =str_len(line)) > sizeof ut.ut_line) len =sizeof ut.ut_line -2;
   byte_copy(ut.ut_line, len, line);
-  if (time(&ut.ut_time) == -1) {
+  tb = (time_t)ut.ut_time;
+  if (time(&tb) == -1) {
     close(fd);
     return(-1);
   }
@@ -81,7 +85,7 @@ int wtmp_logout(const char *line) {
   return(1);
 }
 
-int main (int argc, const char * const *argv, const char * const *envp) {
+int main (int argc, const char * const *argv, __attribute__((unused)) const char * const *envp) {
   int opt;
   int wtmp =0;
 
@@ -94,6 +98,7 @@ int main (int argc, const char * const *argv, const char * const *envp) {
       break;
     case 'V':
       strerr_warn1("$Id: cb399098f794012a7f5e6a3a7090b2d53b86c08c $", 0);
+      __attribute__((fallthrough));
     case '?':
       usage();
     }

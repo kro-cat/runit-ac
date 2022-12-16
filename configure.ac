@@ -89,8 +89,61 @@ AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([sys/time.h])
 AC_CHECK_HEADERS([unistd.h])
-AC_CHECK_HEADERS([utmp.h])
-AC_CHECK_HEADERS([utmpx.h])
+AC_LANG([C])
+AC_CHECK_HEADERS([utmpx.h],
+  [
+    AC_CHECK_TYPES([struct futmpx],
+      [
+        AC_DEFINE([STRUCT_UTMP], [struct futmpx], [Define if struct futmpx.])
+      ],
+      [
+        AC_CHECK_TYPES([struct utmpx],
+          [
+            AC_DEFINE([STRUCT_UTMP], [struct utmpx], [Define if struct utmp.])
+          ],
+          [
+            AC_CHECK_TYPES([struct utmp],
+              [
+                AC_DEFINE([STRUCT_UTMP], [struct utmp], [Define if struct utmp.])
+              ],
+              [
+                AC_MSG_FAILURE([couldn't figure out utmp struct name])
+              ],
+              [[
+                #define __USE__GNU
+                #include <utmpx.h>
+              ]]
+            )
+          ],
+          [[
+            #include <utmpx.h>
+          ]]
+        )
+      ],
+      [[
+        #include <utmpx.h>
+      ]]
+    )
+  ],
+  [
+    AC_CHECK_HEADERS([utmp.h],
+      [
+        AC_CHECK_TYPES([struct utmp],
+          [
+            AC_DEFINE([UTMP_STRUCT], [struct utmp], [Define if struct utmp.])
+          ],
+          [
+            AC_MSG_FAILURE([couldn't figure out utmp struct name])
+          ],
+          [[
+            #include <utmp.h>
+          ]]
+        )
+      ],
+      [AC_MSG_FAILURE([one of utmp.h or utmpx.h is required to build svlogd])]
+    )
+  ]
+)
 
 #types
 AC_TYPE_UINT64_T
@@ -165,7 +218,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
 )
 
 AC_MSG_CHECKING([for number of reboot arguments])
-AC_RUN_IFELSE([AC_LANG_PROGRAM(
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
   [[
     #include <unistd.h>
     #include <sys/reboot.h>
@@ -175,7 +228,7 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
   ]])],
   [
     AC_MSG_RESULT([2])
-    AC_DEFINE_UNQUOTED([NONSTDREBOOT], 1, [Define if non-standard reboot])
+    AC_DEFINE_UNQUOTED([NONSTDREBOOT], 1, [Define if non-standard reboot.])
   ],
   [
     AC_MSG_RESULT([1])
