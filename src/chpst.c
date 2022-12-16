@@ -309,12 +309,14 @@ int main(int argc, const char **argv) {
       switch (*optarg) {
         case '-':
           ++optarg;
-          if (optarg[scan_ulong(optarg, &ul)]) { usage(); nicelvl =ul; }
+          if (optarg[scan_ulong(optarg, &ul)]) usage();
+          nicelvl =ul;
           nicelvl *=-1;
           break;
         case '+': ++optarg; __attribute__((fallthrough));
         default:
-          if (optarg[scan_ulong(optarg, &ul)]) { usage(); nicelvl =ul; }
+          if (optarg[scan_ulong(optarg, &ul)]) usage();
+          nicelvl =ul;
           break;
       }
       break;
