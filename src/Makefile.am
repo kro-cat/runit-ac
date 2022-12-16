@@ -51,48 +51,48 @@ SUBDIRS = libs
 
 
 __bindir__chpst_SOURCES = chpst.c uidgid.c
-__bindir__chpst_LDFLAGS = libs/libunix.a libs/libbyte.a
-__bindir__chpst_LDADD =
+__bindir__chpst_LDFLAGS =
+__bindir__chpst_LDADD = libs/libunix.a libs/libbyte.a
 
 
 __bindir__runit_SOURCES = runit.c
-__bindir__runit_LDFLAGS = libs/libunix.a libs/libbyte.a -static
-__bindir__runit_LDADD =
+__bindir__runit_LDFLAGS = -static
+__bindir__runit_LDADD = libs/libunix.a libs/libbyte.a
 
 
 __bindir__runit_init_SOURCES = runit-init.c
-__bindir__runit_init_LDFLAGS = libs/libunix.a libs/libbyte.a -static
-__bindir__runit_init_LDADD =
+__bindir__runit_init_LDFLAGS = -static
+__bindir__runit_init_LDADD = libs/libunix.a libs/libbyte.a
 
 
 __bindir__runsv_SOURCES = runsv.c
-__bindir__runsv_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
-__bindir__runsv_LDADD =
+__bindir__runsv_LDFLAGS =
+__bindir__runsv_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a
 
 
 __bindir__runsvchdir_SOURCES = runsvchdir.c
-__bindir__runsvchdir_LDFLAGS = libs/libunix.a libs/libbyte.a
-__bindir__runsvchdir_LDADD =
+__bindir__runsvchdir_LDFLAGS =
+__bindir__runsvchdir_LDADD = libs/libunix.a libs/libbyte.a
 
 
 __bindir__runsvdir_SOURCES = runsvdir.c
-__bindir__runsvdir_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
-__bindir__runsvdir_LDADD =
+__bindir__runsvdir_LDFLAGS =
+__bindir__runsvdir_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a
 
 
 __bindir__sv_SOURCES = sv.c
-__bindir__sv_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
-__bindir__sv_LDADD =
+__bindir__sv_LDFLAGS =
+__bindir__sv_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a
 
 
 __bindir__svlogd_SOURCES = svlogd.c pmatch.c fmt_plibs/libtime.c
 # TODO: socket s can be one of '', '-lxnet', and '-lsocket -lnsl'. Figure out how to switch between them.
-__bindir__svlogd_LDFLAGS = libs/libunix.a libs/libbyte.a libs/libtime.a
-__bindir__svlogd_LDADD =
+__bindir__svlogd_LDFLAGS =
+__bindir__svlogd_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a
 
 
 __bindir__utmpset_SOURCES = utmpset.c
-__bindir__utmpset_LDFLAGS = libs/libunix.a libs/libbyte.a
-__bindir__utmpset_LDADD =
+__bindir__utmpset_LDFLAGS =
+__bindir__utmpset_LDADD = libs/libunix.a libs/libbyte.a
 
 

@@ -41,7 +41,7 @@ void sig_int_handler (void) {
 }
 void sig_child_handler (void) { write(selfpipe[1], "", 1); }
 
-int main (int argc, const char * const *argv, char * const *envp) {
+int main (__attribute__((unused)) int argc, __attribute__((unused)) const char * const *argv, char * const *envp) {
   const char * prog[2];
   int pid, pid2;
   int wstat;

@@ -1,16 +1,12 @@
 #include <unistd.h>
 #include <sys/reboot.h>
 
-/* sysdep: -std reboot */
-
 int reboot_system(int what) {
+#ifdef NONSTDREBOOT
   return(reboot(what, (char *)0));
-}
-#include <unistd.h>
-#include <sys/reboot.h>
-
-/* sysdep: +std reboot */
-
-int reboot_system(int what) {
+#else
   return(reboot(what));
+#endif
 }
+
+/* vim: set sts=2 ts=2 tw=2 et : */

@@ -164,6 +164,24 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
   ]
 )
 
+AC_MSG_CHECKING([for number of reboot arguments])
+AC_RUN_IFELSE([AC_LANG_PROGRAM(
+  [[
+    #include <unistd.h>
+    #include <sys/reboot.h>
+  ]],
+  [[
+    return(reboot(what, (char *)0));
+  ]])],
+  [
+    AC_MSG_RESULT([2])
+    AC_DEFINE_UNQUOTED([NONSTDREBOOT], 1, [Define if non-standard reboot])
+  ],
+  [
+    AC_MSG_RESULT([1])
+  ]
+)
+
 #makefiles
 AC_CONFIG_FILES([
   Makefile
