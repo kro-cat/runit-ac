@@ -1,9 +1,10 @@
 /* Public domain. */
 
+#include <unistd.h>
 #include <config.h>
 #include <prot.h>
 
-int prot_gid(int gid)
+int prot_gid(unsigned gid)
 {
 #ifdef HASSHORTSETGROUPS
   short x[2];
