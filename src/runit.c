@@ -127,9 +127,7 @@ struct childinfo *add_child(pid_t pid)
 	size_t i, c;
 
 	if (num_children == MAX_CHILDREN) {
-#ifdef DEBUG
-		strerr_warn2(WARNING, "no space for new children!", 0);
-#endif
+		strerr_warn2(FATAL, "no space for new children!", 0);
 		return NULL;
 	}
 
@@ -287,6 +285,8 @@ void ctrlaltdel()
 	if ((stat(CTRLALTDEL, &s) != -1) && (s.st_mode & S_IXUSR)) {
 		strerr_warn2(INFO, "ctrl-alt-del request...", 0);
 
+		strerr_warn3(INFO, "enter stage: ", CTRLALTDEL, 0);
+
 		child = add_child(fork_exec(CTRLALTDEL, 0));
 
 		while (!child_stopped(child)) {
@@ -297,6 +297,31 @@ void ctrlaltdel()
 		}
 
 		log_stage_exit(CTRLALTDEL, child->wstat);
+
+		stopit();
+	}
+}
+
+void powerfail()
+{
+	struct stat s;
+	struct childinfo *child;
+
+	if ((stat(POWERFAIL, &s) != -1) && (s.st_mode & S_IXUSR)) {
+		strerr_warn2(INFO, "power failure! ", 0);
+
+		strerr_warn3(INFO, "enter stage: ", POWERFAIL, 0);
+
+		child = add_child(fork_exec(POWERFAIL, 0));
+
+		while (!child_stopped(child)) {
+#ifdef DEBUG
+			strerr_warn2(WARNING, "waiting...", 0);
+#endif
+			sleep(1);
+		}
+
+		log_stage_exit(POWERFAIL, child->wstat);
 
 		stopit();
 	}
@@ -343,6 +368,7 @@ void runit()
 	};
 
 	sig_catch(sig_child, child_wait);
+	sig_catch(sig_pwr, powerfail);
 
 	for (st = 0; st < 3; st++) {
 		if (st == 1) {
@@ -409,6 +435,9 @@ void runit()
 	}
 
 	sig_uncatch(sig_child);
+	sig_uncatch(sig_cont);
+	sig_uncatch(sig_int);
+	sig_uncatch(sig_pwr);
 }
 
 
