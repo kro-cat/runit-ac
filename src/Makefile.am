@@ -35,7 +35,7 @@
 #include_HEADERS = library.h
 
 AM_CFLAGS = $(WARN_CFLAGS) -Wall -I$(top_srcdir)/src/include
-bindir = $(top_builddir)/bin
+bindir = ../bin
 
 bin_PROGRAMS = $(bindir)/chpst \
 	       $(bindir)/runit \
