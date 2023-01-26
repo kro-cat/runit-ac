@@ -490,7 +490,7 @@ int main (__attribute__((unused)) int argc,
 	if (RB_DISABLE_CAD == 0) reboot_system(0);
 #endif
 
-	strerr_warn3(INFO, "$Id: 25da3b86f7bed4038b8a039d2f8e8c9bbcf0822b $", ": booting.", 0);
+	strerr_warn3(INFO, "This is Runit version 3.0.0a", ": booting.", 0);
 
 	/* runit */
 	runit();
