@@ -28,8 +28,8 @@ void warn(char *m1, char *m2) {
 
 int main (__attribute__((unused)) int argc, char **argv) {
   struct stat s;
-  __dev_t dev;
-  __ino_t ino;
+  dev_t dev;
+  ino_t ino;
 
   progname =*argv++;
   if (! argv || ! *argv) usage();
