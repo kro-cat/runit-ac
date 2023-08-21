@@ -11,8 +11,7 @@ bin_PROGRAMS = $(bindir)/chpst \
 	       $(bindir)/runsvchdir \
 	       $(bindir)/runsvdir \
 	       $(bindir)/sv \
-	       $(bindir)/svlogd \
-	       $(bindir)/utmpset
+	       $(bindir)/svlogd
 
 SUBDIRS = libs
 
@@ -58,8 +57,11 @@ __bindir__svlogd_LDFLAGS =
 __bindir__svlogd_LDADD = libs/libunix.a libs/libbyte.a libs/libtime.a
 
 
+if ENABLE_UTMPSET
+bin_PROGRAMS += $(bindir)/utmpset
 __bindir__utmpset_SOURCES = utmpset.c
 __bindir__utmpset_LDFLAGS =
 __bindir__utmpset_LDADD = libs/libunix.a libs/libbyte.a
+endif
 
 

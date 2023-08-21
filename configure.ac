@@ -9,14 +9,21 @@ AM_INIT_AUTOMAKE([1.16.0 subdir-objects foreign no-dependencies])
 
 AC_ARG_ENABLE(debug,
   [AS_HELP_STRING([--enable-debug], [Enable debug messages (default is no)])],
-  [enable_debug=$enableval],
-  [enable_debug=no]
+  [
+    AC_MSG_NOTICE([debug messages will be enabled])
+    AC_DEFINE([DEBUG], [], [enable debug messages])
+  ]
 )
 
-if test "x$enable_debug" = "xyes"; then
-  AC_DEFINE([DEBUG], [], [enable debug messages])
-  AC_MSG_NOTICE([debug messages will be enabled])
-fi
+AC_ARG_ENABLE(utmpset,
+[AS_HELP_STRING([--disable-utmpset], [disable utmpset build])],
+  [
+    AC_MSG_NOTICE([utmpset will not be built])
+    enable_utmpset=no
+  ],
+  [enable_utmpset=yes]
+)
+AM_CONDITIONAL([ENABLE_UTMPSET], [test "x${enable_utmpset}" = "xyes"])
 
 #host switch
 AC_CANONICAL_HOST
@@ -57,62 +64,63 @@ AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([sys/time.h])
 AC_CHECK_HEADERS([unistd.h])
-AC_LANG_PUSH([C])
-AC_CHECK_HEADERS([utmpx.h],
+AS_IF([test "x${enable_utmpset}" = "xyes"],
   [
-    AC_CHECK_TYPES([struct futmpx],
+    AC_MSG_CHECKING([for utmp headers])
+    AC_LANG_PUSH([C])
+    AC_CHECK_HEADERS([utmpx.h],
       [
-        AC_DEFINE([STRUCT_UTMP], [struct futmpx], [Define if struct futmpx.])
-      ],
-      [
-        AC_CHECK_TYPES([struct utmpx],
+        AC_MSG_RESULT(utmpx.h)
+        AC_MSG_CHECKING([for utmp struture type])
+        AC_CHECK_TYPES([struct futmpx],
           [
-            AC_DEFINE([STRUCT_UTMP], [struct utmpx], [Define if struct utmp.])
+            AC_MSG_RESULT(struct futmpx)
+            AC_DEFINE([STRUCT_UTMP], [struct futmpx], [Define if struct futmpx.])
           ],
-          [
-            AC_CHECK_TYPES([struct utmp],
+          [AC_CHECK_TYPES([struct utmpx],
+            [
+              AC_MSG_RESULT(struct utmpx)
+              AC_DEFINE([STRUCT_UTMP], [struct utmpx], [Define if struct utmp.])
+            ],
+            [AC_CHECK_TYPES([struct utmp],
               [
+                AC_MSG_RESULT(struct utmpx)
                 AC_DEFINE([STRUCT_UTMP], [struct utmp], [Define if struct utmp.])
               ],
               [
+                AC_MSG_RESULT(unknown)
                 AC_MSG_FAILURE([couldn't figure out utmp struct name])
               ],
-              [[
-                #define __USE__GNU
+              [[#define __USE__GNU
                 #include <utmpx.h>
               ]]
-            )
-          ],
-          [[
-            #include <utmpx.h>
+            )],
+            [[#include <utmpx.h>
+            ]]
+          )],
+          [[#include <utmpx.h>
           ]]
         )
       ],
-      [[
-        #include <utmpx.h>
-      ]]
+      [AC_CHECK_HEADERS([utmp.h],
+        [
+          AC_MSG_RESULT(utmp.h)
+          AC_CHECK_TYPES([struct utmp],
+            [AC_DEFINE([UTMP_STRUCT], [struct utmp], [Define if struct utmp.])],
+            [AC_MSG_FAILURE([couldn't figure out utmp struct name])],
+            [[#include <utmp.h>
+            ]]
+          )
+        ],
+        [
+          AC_MSG_RESULT(not found)
+          AC_MSG_FAILURE([one of utmp.h or utmpx.h is required to build svlogd])
+        ]
+      )]
     )
-  ],
-  [
-    AC_CHECK_HEADERS([utmp.h],
-      [
-        AC_CHECK_TYPES([struct utmp],
-          [
-            AC_DEFINE([UTMP_STRUCT], [struct utmp], [Define if struct utmp.])
-          ],
-          [
-            AC_MSG_FAILURE([couldn't figure out utmp struct name])
-          ],
-          [[
-            #include <utmp.h>
-          ]]
-        )
-      ],
-      [AC_MSG_FAILURE([one of utmp.h or utmpx.h is required to build svlogd])]
-    )
+    AC_LANG_POP([C])
   ]
 )
-AC_LANG_POP([C])
 
 #types
 AC_TYPE_UINT64_T
