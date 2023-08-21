@@ -1,20 +1,20 @@
-#include <coe.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <signal.h>
 #include <direntry.h>
-#include <env.h>
+#include <strerr.h>
 #include <error.h>
-#include <fd.h>
-#include <iopause.h>
-#include <ndelay.h>
+#include <wait.h>
+#include <env.h>
 #include <open.h>
 #include <pathexec.h>
-#include <sig.h>
-#include <signal.h>
+#include <fd.h>
 #include <str.h>
-#include <strerr.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <wait.h>
+#include <coe.h>
+#include <iopause.h>
+#include <sig.h>
+#include <ndelay.h>
 
 #define USAGE " [-P] dir"
 #define VERSION "$Id: ecebd0a50510e91639c6a45dda8b0947aa8eb885 $"

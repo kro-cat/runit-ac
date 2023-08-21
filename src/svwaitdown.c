@@ -1,11 +1,11 @@
-#include <buffer.h>
-#include <error.h>
-#include <open.h>
-#include <scan.h>
-#include <sgetopt.h>
-#include <strerr.h>
-#include <tai.h>
 #include <unistd.h>
+#include <strerr.h>
+#include <error.h>
+#include <sgetopt.h>
+#include <scan.h>
+#include <open.h>
+#include <tai.h>
+#include <buffer.h>
 
 #define FATAL "svwaitdown: fatal: "
 #define WARN "svwaitdown: warning: "

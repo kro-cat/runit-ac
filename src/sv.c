@@ -1,17 +1,17 @@
-#include <buffer.h>
-#include <env.h>
-#include <error.h>
-#include <fmt.h>
-#include <open.h>
-#include <scan.h>
-#include <sgetopt.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <str.h>
 #include <strerr.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include <error.h>
+#include <sgetopt.h>
+#include <open.h>
+#include <env.h>
+#include <buffer.h>
+#include <fmt.h>
+#include <scan.h>
 #include <tai.h>
 #include <taia.h>
-#include <unistd.h>
 #include <wait.h>
 
 #define USAGE " [-v] [-w sec] command service ..."

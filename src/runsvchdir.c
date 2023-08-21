@@ -1,10 +1,10 @@
-#include <buffer.h>
-#include <error.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <strerr.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <error.h>
+#include <buffer.h>
 
 #define USAGE " dir"
 #define SVDIR "/etc/runit/runsvdir"

@@ -1,22 +1,22 @@
 #include <config.h>
 
-#include <coe.h>
-#include <error.h>
+#include <sys/types.h>
+#include <sys/reboot.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <signal.h>
+#include <unistd.h>
 #include <fcntl.h>
-#include <iopause.h>
-#include <ndelay.h>
-#include <open.h>
-#include <reboot_system.h>
 #include <runit.h>
 #include <sig.h>
-#include <signal.h>
 #include <strerr.h>
-#include <sys/ioctl.h>
-#include <sys/reboot.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <error.h>
+#include <iopause.h>
+#include <coe.h>
+#include <ndelay.h>
 #include <wait.h>
+#include <open.h>
+#include <reboot_system.h>
 
 /* #define DEBUG */
 

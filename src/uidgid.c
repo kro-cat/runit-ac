@@ -1,9 +1,9 @@
-#include <grp.h>
-#include <pwd.h>
-#include <scan.h>
-#include <str.h>
 #include <sys/types.h>
+#include <pwd.h>
+#include <grp.h>
 #include <uidgid.h>
+#include <str.h>
+#include <scan.h>
 
 /* user */
 unsigned int uidgid_get(struct uidgid *u, char *ug) {
