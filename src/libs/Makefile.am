@@ -1,3 +1,6 @@
+srcdir = @srcdir@
+VPATH = @srcdir@
+
 AM_CFLAGS = $(WARN_CFLAGS) -Wall -I$(top_srcdir)/src/include
 
 noinst_LIBRARIES= libunix.a libbyte.a libtime.a

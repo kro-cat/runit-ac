@@ -1,31 +1,11 @@
-#
-#  MIT License
-#
-#  Copyright (c) 2022 Kara
-#
-#  Permission is hereby granted, free of charge, to any person obtaining a copy
-#  of this software and associated documentation files (the "Software"), to deal
-#  in the Software without restriction, including without limitation the rights
-#  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-#  copies of the Software, and to permit persons to whom the Software is
-#  furnished to do so, subject to the following conditions:
-#
-#  The above copyright notice and this permission notice shall be included in all
-#  copies or substantial portions of the Software.
-#
-#  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-#  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-#  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-#  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-#  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-#  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-#  SOFTWARE.
-#
-
 AC_PREREQ([2.69])
-AC_INIT([runit], [0.1.0], [bugs@kara-online.net], [runit])
+AC_INIT([runit], [0.2.0], [bugs@kara-online.net], [runit])
+AC_CONFIG_MACRO_DIRS([m4])
+#AC_CONFIG_SUBDIRS([include/krossock])
+AC_CONFIG_SRCDIR([src/])
+AC_CONFIG_HEADERS([config.h])
 
-m4_include([m4/ax_valgrind_check.m4])
+AM_INIT_AUTOMAKE([1.16.0 subdir-objects foreign no-dependencies])
 
 AC_ARG_ENABLE(debug,
   [AS_HELP_STRING([--enable-debug], [Enable debug messages (default is no)])],
@@ -63,18 +43,6 @@ AS_CASE(["$host_os"],
 #socket libs
 # may be '', '-lxnet', or '-lsocket -lnsl'
 
-
-#autoconf stuff
-AM_INIT_AUTOMAKE([subdir-objects])
-WARN_CFLAGS="-W -Wall -Wunused -Werror"
-AC_SUBST(WARN_CFLAGS)
-AC_CONFIG_MACRO_DIRS([m4])
-#AC_CONFIG_SUBDIRS([include/krossock])
-AC_CONFIG_SRCDIR([src/])
-AC_CONFIG_HEADERS([config.h])
-AX_VALGRIND_DFLT([memcheck], [on])
-AX_VALGRIND_CHECK
-
 #program config
 AC_PROG_CC
 AC_PROG_CXX
@@ -89,7 +57,7 @@ AC_CHECK_HEADERS([sys/param.h])
 AC_CHECK_HEADERS([sys/socket.h])
 AC_CHECK_HEADERS([sys/time.h])
 AC_CHECK_HEADERS([unistd.h])
-AC_LANG([C])
+AC_LANG_PUSH([C])
 AC_CHECK_HEADERS([utmpx.h],
   [
     AC_CHECK_TYPES([struct futmpx],
@@ -144,6 +112,7 @@ AC_CHECK_HEADERS([utmpx.h],
     )
   ]
 )
+AC_LANG_POP([C])
 
 #types
 AC_TYPE_UINT64_T
@@ -189,8 +158,8 @@ AC_CHECK_FUNCS([waitpid],
   ]
 )
 
-AC_LANG([C])
 AC_MSG_CHECKING([for short setgroups])
+AC_LANG_PUSH([C])
 AC_RUN_IFELSE([AC_LANG_PROGRAM(
   [[
     #include <sys/types.h>
@@ -216,8 +185,10 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM(
     AC_MSG_RESULT([no])
   ]
 )
+AC_LANG_POP([C])
 
 AC_MSG_CHECKING([for number of reboot arguments])
+AC_LANG_PUSH([C])
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
   [[
     #include <unistd.h>
@@ -234,13 +205,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
     AC_MSG_RESULT([1])
   ]
 )
+AC_LANG_POP([C])
 
 #makefiles
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
   src/libs/Makefile
-  tests/Makefile
-  include/Makefile
 ])
+
+m4_include([m4/ax_valgrind_check.m4])
+AX_VALGRIND_DFLT([memcheck], [on])
+AX_VALGRIND_CHECK
+
 AC_OUTPUT
