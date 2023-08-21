@@ -1,24 +1,24 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <signal.h>
-#include <strerr.h>
-#include <error.h>
-#include <taia.h>
-#include <sig.h>
-#include <env.h>
-#include <coe.h>
-#include <ndelay.h>
-#include <fifo.h>
-#include <open.h>
-#include <lock.h>
-#include <iopause.h>
-#include <wait.h>
-#include <fd.h>
 #include <buffer.h>
-#include <fmt.h>
 #include <byte.h>
+#include <coe.h>
+#include <env.h>
+#include <error.h>
+#include <fd.h>
+#include <fifo.h>
+#include <fmt.h>
+#include <iopause.h>
+#include <lock.h>
+#include <ndelay.h>
+#include <open.h>
+#include <sig.h>
+#include <signal.h>
+#include <stdio.h>
+#include <strerr.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <taia.h>
+#include <unistd.h>
+#include <wait.h>
 
 #define USAGE " dir"
 

@@ -25,6 +25,14 @@ AC_ARG_ENABLE(utmpset,
 )
 AM_CONDITIONAL([ENABLE_UTMPSET], [test "x${enable_utmpset}" = "xyes"])
 
+AC_ARG_ENABLE(ungraceful-death,
+[AS_HELP_STRING([--enable-ungraceful-death], [make runit exit like a normal program instead of an init])],
+  [
+    AC_MSG_WARN([UNGRACEFUL DEATH IS ENABLED, DO NOT USE THIS AS A REAL INIT HANDLER])
+    AC_DEFINE([UNGRACEFUL_DEATH], [], [Make init exit like a normal program])
+  ]
+)
+
 #host switch
 AC_CANONICAL_HOST
 

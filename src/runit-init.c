@@ -1,12 +1,12 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <unistd.h>
-#include <runit.h>
-#include <strerr.h>
-#include <sig.h>
-#include <open.h>
 #include <error.h>
+#include <open.h>
+#include <runit.h>
+#include <sig.h>
+#include <signal.h>
+#include <strerr.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #define USAGE " 0|6"
 #define FATAL "init: fatal: "

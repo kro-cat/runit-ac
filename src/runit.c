@@ -1,21 +1,22 @@
-#include <sys/types.h>
-#include <sys/reboot.h>
-#include <sys/ioctl.h>
-#include <sys/stat.h>
-#include <signal.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <runit.h>
-#include <sig.h>
-#include <strerr.h>
-#include <error.h>
-#include <iopause.h>
+#include <config.h>
+
 #include <coe.h>
+#include <error.h>
+#include <fcntl.h>
+#include <iopause.h>
 #include <ndelay.h>
-#include <wait.h>
 #include <open.h>
 #include <reboot_system.h>
-#include <config.h>
+#include <runit.h>
+#include <sig.h>
+#include <signal.h>
+#include <strerr.h>
+#include <sys/ioctl.h>
+#include <sys/reboot.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <wait.h>
 
 /* #define DEBUG */
 
@@ -511,34 +512,34 @@ int main (__attribute__((unused)) int argc,
 				reboot_system(RB_AUTOBOOT);
 			}
 			else {
-#ifdef RB_POWER_OFF
+# ifdef RB_POWER_OFF
 				strerr_warn2(INFO, "power off...", 0);
 				sync();
 				reboot_system(RB_POWER_OFF);
 				sleep(2);
-#endif
-#ifdef RB_HALT_SYSTEM
+# endif
+# ifdef RB_HALT_SYSTEM
 				strerr_warn2(INFO, "system halt.", 0);
 				sync();
 				reboot_system(RB_HALT_SYSTEM);
-#else
-#ifdef RB_HALT
+# else
+#  ifdef RB_HALT
 				strerr_warn2(INFO, "system halt.", 0);
 				sync();
 				reboot_system(RB_HALT);
-#else
+#  else
 				strerr_warn2(INFO, "system reboot.", 0);
 				sync();
 				reboot_system(RB_AUTOBOOT);
-#endif
-#endif
+#  endif
+# endif /* ifdef RB_HALT_SYSTEM */
 			}
 			if (pid == 0) _exit(0);
 			break;
 		default:
 			while (wait_pid(0, pid) == -1);
 	}
-#endif
+#endif /* ifdef RB_AUTOBOOT */
 
 	for (;;) sig_pause();
 	/* not reached */

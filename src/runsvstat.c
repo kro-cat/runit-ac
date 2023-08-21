@@ -1,13 +1,13 @@
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <strerr.h>
-#include <error.h>
-#include <sgetopt.h>
-#include <open.h>
 #include <buffer.h>
-#include <tai.h>
+#include <error.h>
 #include <fmt.h>
+#include <open.h>
+#include <sgetopt.h>
+#include <strerr.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <tai.h>
+#include <unistd.h>
 
 #define USAGE " [ -l ] service ..."
 
