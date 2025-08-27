@@ -1,3 +1,0 @@
-2022-12-15 Kara O'Dell <contact@kara-online.net>
-
-I'm working on porting over runit to a automake system. I prefer this way of managing depencies over scrounging makefiles.
