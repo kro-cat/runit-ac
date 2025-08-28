@@ -1,7 +1,7 @@
+m4_define([runit_VERSION], [3.0.0-alpha.2])
 AC_PREREQ([2.69])
-AC_INIT([runit], [0.2.0], [bugs@kara-online.net], [runit])
+AC_INIT([runit], m4_defn([runit_VERSION]), [], [runit-]m4_defn([runit_VERSION]))
 AC_CONFIG_MACRO_DIRS([m4])
-#AC_CONFIG_SUBDIRS([include/krossock])
 AC_CONFIG_SRCDIR([src/])
 AC_CONFIG_HEADERS([config.h])
 
@@ -25,11 +25,11 @@ AC_ARG_ENABLE(utmpset,
 )
 AM_CONDITIONAL([ENABLE_UTMPSET], [test "x${enable_utmpset}" = "xyes"])
 
-AC_ARG_ENABLE(ungraceful-death,
-[AS_HELP_STRING([--enable-ungraceful-death], [make runit exit like a normal program instead of an init])],
+AC_ARG_ENABLE(container-mode,
+[AS_HELP_STRING([--enable-container-mode], [run as non-root, disable pid 1 enforcement, don't sync on shutdown, disable kernel halt and reboot commands])],
   [
-    AC_MSG_WARN([UNGRACEFUL DEATH IS ENABLED, DO NOT USE THIS AS A REAL INIT HANDLER])
-    AC_DEFINE([UNGRACEFUL_DEATH], [], [Make init exit like a normal program])
+    AC_MSG_WARN([CONTAINER MODE IS ENABLED, DO NOT USE THIS AS A REAL INIT HANDLER])
+    AC_DEFINE([CONTAINER_MODE], [], [Make runit act like a normal program])
   ]
 )
 
@@ -139,7 +139,6 @@ AC_TYPE_UID_T
 AC_FUNC_FORK
 AC_FUNC_GETGROUPS
 AC_FUNC_MALLOC
-AC_FUNC_WAIT3
 AC_CHECK_FUNCS([dup2])
 AC_CHECK_FUNCS([fchdir])
 AC_CHECK_FUNCS([ftruncate])
@@ -168,34 +167,31 @@ AC_CHECK_FUNCS([sigprocmask],
     AC_DEFINE_UNQUOTED([HASSIGPROCMASK], 1, [Define if sigprocmask exists.])
   ]
 )
-AC_CHECK_FUNCS([waitpid],
-  [
-    AC_DEFINE_UNQUOTED([HASWAITPID], 1, [Define if waitpid exists.])
-  ]
-)
 
-AC_MSG_CHECKING([for short setgroups])
+AC_MSG_CHECKING([for POSIX setgroups])
 AC_LANG_PUSH([C])
-AC_RUN_IFELSE([AC_LANG_PROGRAM(
-  [[
-    #include <sys/types.h>
-    #include <unistd.h>
-    #include <grp.h>
-  ]],
-  [[
-    short x[4];
-    x[0] = x[1] = 1;
-    if (getgroups(1,x)==0) if (setgroups(1,x)==-1) _exit(1);
-    if (getgroups(1,x)==-1) _exit(1);
-    if (x[1]!=1) _exit(1);
-    x[1]=2;
-    if (getgroups(1,x)==-1) _exit(1);
-    if (x[1]!=2) _exit(1);
-    _exit(0);
-  ]])],
+AC_RUN_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[
+      #include <sys/types.h>
+      #include <unistd.h>
+      #include <grp.h>
+    ]],
+    [[
+      short x[4];
+      x[0] = x[1] = 1;
+      if (getgroups(1,x)==0) if (setgroups(1,x)==-1) _exit(1);
+      if (getgroups(1,x)==-1) _exit(1);
+      if (x[1]!=1) _exit(1);
+      x[1]=2;
+      if (getgroups(1,x)==-1) _exit(1);
+      if (x[1]!=2) _exit(1);
+      _exit(0);
+    ]]
+  )],
   [
     AC_MSG_RESULT([yes])
-    AC_DEFINE_UNQUOTED([HASSHORTSETGROUPS], 1, [Define if short setgroups works])
+    AC_DEFINE_UNQUOTED([HASPOSIXSETGROUPS], 1, [Define if POSIX setgroups works])
   ],
   [
     AC_MSG_RESULT([no])
@@ -205,14 +201,16 @@ AC_LANG_POP([C])
 
 AC_MSG_CHECKING([for number of reboot arguments])
 AC_LANG_PUSH([C])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-  [[
-    #include <unistd.h>
-    #include <sys/reboot.h>
-  ]],
-  [[
-    return(reboot(what, (char *)0));
-  ]])],
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[
+      #include <unistd.h>
+      #include <sys/reboot.h>
+    ]],
+    [[
+      return(reboot(what, (char *)0));
+    ]]
+  )],
   [
     AC_MSG_RESULT([2])
     AC_DEFINE_UNQUOTED([NONSTDREBOOT], 1, [Define if non-standard reboot.])
@@ -227,7 +225,9 @@ AC_LANG_POP([C])
 AC_CONFIG_FILES([
   Makefile
   src/Makefile
-  src/libs/Makefile
+  src/libs/byte/Makefile
+  src/libs/time/Makefile
+  src/libs/unix/Makefile
 ])
 
 m4_include([m4/ax_valgrind_check.m4])
@@ -235,3 +235,5 @@ AX_VALGRIND_DFLT([memcheck], [on])
 AX_VALGRIND_CHECK
 
 AC_OUTPUT
+
+# vim: ft=m4 ts=2 sts=2 sw=2 et

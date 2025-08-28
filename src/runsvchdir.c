@@ -2,75 +2,109 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <strerr.h>
-#include <error.h>
-#include <buffer.h>
 
-#define USAGE " dir"
-#define SVDIR "/etc/runit/runsvdir"
+#include <libs/byte/strerr.h>
 
-#define VERSION "$Id: 9bf17f77e33c6b961e060aacffa3c8abd38fc64a $"
+#include <libs/unix/buffer.h>
+
 
 char *progname;
+
+#define USAGE " dir"
+void usage()
+{
+	strerr_die4x(1, "usage: ", progname, USAGE, "\n");
+}
+
+// TODO LOGGING
+void fatal(char *m1, char *m2)
+{
+	strerr_die5sys(111, progname, ": fatal: ", m1, m2, ": ");
+}
+
+void fatalx(char *m1, char *m2)
+{
+	strerr_die4x(111, progname, ": fatal: ", m1, m2);
+}
+
+void warn(char *m1, char *m2)
+{
+	strerr_warn5(progname, ": fatal: ", m1, m2, ": ", &strerr_sys);
+}
+
+#define SVDIR "/etc/runit/runsvdir"
 char *new;
 
-void usage () { strerr_die4x(1, "usage: ", progname, USAGE, "\n"); }
+int main (__attribute__((unused)) int argc, char **argv)
+{
+	struct stat s;
+	dev_t dev;
+	ino_t ino;
 
-void fatal(char *m1, char *m2) {
-  strerr_die5sys(111, progname, ": fatal: ", m1, m2, ": ");
-}
-void fatalx(char *m1, char *m2) {
-  strerr_die4x(111, progname, ": fatal: ", m1, m2);
-}
-void warn(char *m1, char *m2) {
-  strerr_warn5(progname, ": fatal: ", m1, m2, ": ", &strerr_sys);
-}
+	progname = *argv++;
+	if (!argv || !*argv)
+		usage();
 
-int main (__attribute__((unused)) int argc, char **argv) {
-  struct stat s;
-  dev_t dev;
-  ino_t ino;
+	new = *argv;
+	if (new[0] == '.')
+		fatalx(new, ": must not start with a dot.");
 
-  progname =*argv++;
-  if (! argv || ! *argv) usage();
+	if (chdir(SVDIR) == -1)
+		fatal("unable to chdir: ", SVDIR);
 
-  new =*argv;
-  if (new[0] == '.') fatalx(new, ": must not start with a dot.");
-  if (chdir(SVDIR) == -1) fatal("unable to chdir: ", SVDIR);
+	if (stat(new, &s) == -1) {
+		if (errno == error_noent)
+			fatal(new, 0);
 
-  if (stat(new, &s) == -1) {
-    if (errno == error_noent) fatal(new, 0);
-    fatal("unable to stat: ", new);
-  }
-  if (! S_ISDIR(s.st_mode)) fatalx(new, "not a directory.");
-  ino =s.st_ino;
-  dev =s.st_dev;
-  if (stat("current", &s) == -1) fatal("unable to stat: ", "current");
-  if ((s.st_ino == ino) && (s.st_dev == dev)) {
-    buffer_puts(buffer_1, "runsvchdir: ");
-    buffer_puts(buffer_1, new);
-    buffer_puts(buffer_1, ": current.\n");
-    buffer_flush(buffer_1);
-    _exit(0);
-  }
+		fatal("unable to stat: ", new);
+	}
 
-  if (unlink("current.new") == -1)
-    if (errno != error_noent) fatal("unable to unlink: ", "current.new");
-  if (symlink(new, "current.new") == -1)
-    fatal("unable to create: current.new -> ", new);
-  if (unlink("previous") == -1)
-    if (errno != error_noent) fatal("unable to unlink: ", "previous");
-  if (rename("current", "previous") == -1)
-    fatal("unable to copy: current to ", "previous");
-  if (rename("current.new", "current") == -1) {
-    warn("unable to move: current.new to ", "current");
-    if (rename("previous", "current") == -1)
-      fatal("unable to move previous back to ", "current");
-    _exit(111);
-  }
-  buffer_puts(buffer_1, "runsvchdir: ");
-  buffer_puts(buffer_1, new);
-  buffer_puts(buffer_1, ": now current.\n");
-  buffer_flush(buffer_1);
-  _exit(0);
+	if (!S_ISDIR(s.st_mode))
+		fatalx(new, "not a directory.");
+
+	ino = s.st_ino;
+	dev = s.st_dev;
+
+	if (stat("current", &s) == -1)
+		fatal("unable to stat: ", "current");
+
+	if ((s.st_ino == ino) && (s.st_dev == dev)) {
+		buffer_puts(buffer_1, "runsvchdir: ");
+		buffer_puts(buffer_1, new);
+		buffer_puts(buffer_1, ": current.\n");
+		buffer_flush(buffer_1);
+		_exit(0);
+	}
+
+	if (unlink("current.new") == -1) {
+		if (errno != error_noent)
+			fatal("unable to unlink: ", "current.new");
+	}
+
+	if (symlink(new, "current.new") == -1)
+		fatal("unable to create: current.new -> ", new);
+
+	if (unlink("previous") == -1) {
+		if (errno != error_noent)
+			fatal("unable to unlink: ", "previous");
+	}
+
+	if (rename("current", "previous") == -1)
+		fatal("unable to copy: current to ", "previous");
+
+	if (rename("current.new", "current") == -1) {
+		warn("unable to move: current.new to ", "current");
+
+		if (rename("previous", "current") == -1)
+			fatal("unable to move previous back to ", "current");
+
+		_exit(111);
+	}
+
+	buffer_puts(buffer_1, "runsvchdir: ");
+	buffer_puts(buffer_1, new);
+	buffer_puts(buffer_1, ": now current.\n");
+	buffer_flush(buffer_1);
+
+	_exit(0);
 }

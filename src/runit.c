@@ -7,19 +7,22 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <runit.h>
-#include <sig.h>
-#include <strerr.h>
-#include <error.h>
-#include <iopause.h>
-#include <coe.h>
-#include <ndelay.h>
-#include <wait.h>
-#include <open.h>
-#include <reboot_system.h>
+
+#include <libs/unix/sig.h>
+#include <libs/unix/strerr.h>
+#include <libs/unix/iopause.h>
+#include <libs/unix/coe.h>
+#include <libs/unix/ndelay.h>
+#include <libs/unix/open.h>
+
+#include "wait.h"
+#include "runit.h"
+#include "reboot_system.h"
+
 
 /* #define DEBUG */
 
+// TODO LOGGING
 #define INFO "- runit: "
 #define WARNING "- runit: warning: "
 #define FATAL "- runit: fatal: "
@@ -39,7 +42,7 @@ void reget_stderr()
 	int fd;
 
 	/* reget stderr */
-	if ((fd = open_write("/dev/console")) != -1) {
+	if ((fd = open_write("/dev/console")) != -1) { // TODO INIT-LIKE
 		dup2(fd, 2);
 		if (fd > 2)
 			close(fd);
@@ -76,7 +79,7 @@ pid_t fork_exec(const char *path, void (*child_init)())
 
 	while ((pid = fork()) == -1) {
 		strerr_warn4(FATAL, "unable to fork for \"", path,
-				"\" pausing: ", &strerr_sys);
+			     "\" pausing: ", &strerr_sys);
 		sleep(5);
 	}
 
@@ -220,10 +223,10 @@ void child_wait()
 			}
 		} else if ((pid == -1) && (errno != ECHILD)) {
 			/*
-			stage_wstat = 0;
-			stage_pid = 0;
-			strerr_warn3(0, WARNING, "child handler: wait_pid: ", &strerr_sys);
-			*/
+			   stage_wstat = 0;
+			   stage_pid = 0;
+			   strerr_warn3(0, WARNING, "child handler: wait_pid: ", &strerr_sys);
+			   */
 			strerr_warn2(FATAL, "wait_nohang: ", &strerr_sys);
 		}
 	} while (pid > 0);
@@ -270,7 +273,7 @@ void stopit()
 		if (!child_stopped(stage)) {
 			/* still there */
 			strerr_warn2(WARNING,
-					"stage 2 not terminated, sending sigkill...", 0);
+				     "stage 2 not terminated, sending sigkill...", 0);
 			kill(stage->pid, 9);
 			if (wait_pid(&(stage->wstat), stage->pid) == -1)
 				strerr_warn2(WARNING, "wait_pid: ", &strerr_sys);
@@ -310,9 +313,7 @@ void powerfail()
 
 	if ((stat(POWERFAIL, &s) != -1) && (s.st_mode & S_IXUSR)) {
 		strerr_warn2(INFO, "power failure! ", 0);
-
 		strerr_warn3(INFO, "enter stage: ", POWERFAIL, 0);
-
 		child = add_child(fork_exec(POWERFAIL, 0));
 
 		while (!child_stopped(child)) {
@@ -339,11 +340,11 @@ void stage1_init()
 	int fd;
 
 	/* stage 1 gets full control of console */
-	if ((fd = open("/dev/console", O_RDWR)) == -1) {
+	if ((fd = open("/dev/console", O_RDWR)) == -1) { // TODO INIT-LIKE
 		strerr_warn2(WARNING, "unable to open /dev/console: ",
-				&strerr_sys);
+			     &strerr_sys);
 	} else {
-#ifdef TIOCSCTTY 
+#ifdef TIOCSCTTY
 		ioctl(fd, TIOCSCTTY, (char *)0);
 #endif
 		dup2(fd, 0);
@@ -362,7 +363,7 @@ void runit()
 	char ch;
 
 	int st;
-	const char * const stage_path[3] = {
+	const char * const stage_path[3] = { // TODO USE CONFIGURABLE PATHS
 		"/etc/runit/1",
 		"/etc/runit/2",
 		"/etc/runit/3"
@@ -384,7 +385,7 @@ void runit()
 
 		if (st == 0) {
 			stage = add_child(fork_exec(stage_path[st],
-						stage1_init));
+						    stage1_init));
 		} else {
 			stage = add_child(fork_exec(stage_path[st], 0));
 		}
@@ -412,26 +413,27 @@ void runit()
 
 		log_stage_exit(stage_path[st], stage->wstat);
 
-		if (st == 0) {
-			if (wait_crashed(stage->wstat) ||
-					(wait_exitcode(stage->wstat) == 100))
-			{
-				strerr_warn2(WARNING, "skipping stage 2...", 0);
-				st++;
-				continue;
+		switch (st) {
+		case 0:
+			if (!wait_crashed(stage->wstat)) {
+				if (wait_exitcode(stage->wstat) != 100)
+					continue;
 			}
-		} else if (st == 1) {
-			if (wait_crashed(stage->wstat) ||
-					(wait_exitcode(stage->wstat) == 111))
-			{
-				strerr_warn2(WARNING,
-						"killing all processes in stage 2...", 0);
-				kill(-(stage->pid), 9);
-				sleep(5);
-				strerr_warn2(WARNING, "restarting.", 0);
-				st--;
-				continue;
+
+			strerr_warn2(WARNING, "skipping stage 2...", 0);
+			st++;
+		case 1:
+			if (!wait_crashed(stage->wstat)) {
+				if (wait_exitcode(stage->wstat) != 111)
+					continue;
 			}
+
+			strerr_warn2(WARNING,
+				     "killing all processes in stage 2...", 0);
+			kill(-(stage->pid), 9);
+			sleep(5);
+			strerr_warn2(WARNING, "restarting.", 0);
+			st--;
 		}
 	}
 
@@ -448,8 +450,8 @@ void runit()
  *****************************************************************************/
 
 int main (__attribute__((unused)) int argc,
-		__attribute__((unused)) const char * const *argv,
-		char * const *envp)
+	  __attribute__((unused)) const char * const *argv,
+	  char * const *envp)
 {
 	pid_t pid;
 	int fd;
@@ -457,7 +459,9 @@ int main (__attribute__((unused)) int argc,
 
 	global_envp = envp;
 
-	if (getpid() != 1) strerr_die2x(111, FATAL, "must be run as process no 1.");
+	if (getpid() != 1) // TODO INIT-LIKE
+		strerr_die2x(111, FATAL, "must be run as process no 1.");
+
 	setsid();
 
 	sig_block(sig_alarm);
@@ -465,7 +469,7 @@ int main (__attribute__((unused)) int argc,
 	sig_block(sig_hangup);
 	sig_block(sig_int);
 	sig_block(sig_pipe);
-	//sig_block(sig_term);
+	//sig_block(sig_term);  // TODO INIT-LIKE
 
 	/* console */
 	if ((fd = open_write("/dev/console")) != -1) {
@@ -478,7 +482,8 @@ int main (__attribute__((unused)) int argc,
 
 	/* create selfpipe */
 	while (pipe(selfpipe) == -1) {
-		strerr_warn2(FATAL, "unable to create selfpipe, pausing: ", &strerr_sys);
+		strerr_warn2(FATAL, "unable to create selfpipe, pausing: ",
+			     &strerr_sys);
 		sleep(5);
 	}
 	coe(selfpipe[0]);
@@ -491,7 +496,7 @@ int main (__attribute__((unused)) int argc,
 	if (RB_DISABLE_CAD == 0) reboot_system(0);
 #endif
 
-	strerr_warn3(INFO, "This is Runit version 3.0.0a", ": booting.", 0);
+	strerr_warn2(INFO, "This is Runit version " #PACKAGE_VERSION ": booting.", 0);
 
 	/* runit */
 	runit();
@@ -503,48 +508,51 @@ int main (__attribute__((unused)) int argc,
 
 	pid = fork();
 	switch (pid) {
-		case  0:
-			__attribute__((fallthrough));
-		case -1:
-			if ((stat(REBOOT, &s) != -1) && (s.st_mode & S_IXUSR)) {
-				strerr_warn2(INFO, "system reboot.", 0);
-				sync();
-				reboot_system(RB_AUTOBOOT);
-			}
-			else {
+	case  0:
+		__attribute__((fallthrough));
+	case -1:
+		if ((stat(REBOOT, &s) != -1) && (s.st_mode & S_IXUSR)) {
+			strerr_warn2(INFO, "system reboot.", 0);
+			sync(); // TODO INIT-LIKE
+			reboot_system(RB_AUTOBOOT); // TODO INIT-LIKE
+		}
+		else {
 # ifdef RB_POWER_OFF
-				strerr_warn2(INFO, "power off...", 0);
-				sync();
-				reboot_system(RB_POWER_OFF);
-				sleep(2);
+			strerr_warn2(INFO, "power off...", 0);
+			sync(); // TODO INIT-LIKE
+			reboot_system(RB_POWER_OFF); // TODO INIT-LIKE
+			sleep(2);
 # endif
 # ifndef UNGRACEFUL_DEATH
 #  ifdef RB_HALT_SYSTEM
-				strerr_warn2(INFO, "system halt.", 0);
-				sync();
-				reboot_system(RB_HALT_SYSTEM);
+			strerr_warn2(INFO, "system halt.", 0);
+			sync(); // TODO INIT-LIKE
+			reboot_system(RB_HALT_SYSTEM); // TODO INIT-LIKE
 #  else
 #   ifdef RB_HALT
-				strerr_warn2(INFO, "system halt.", 0);
-				sync();
-				reboot_system(RB_HALT);
+			strerr_warn2(INFO, "system halt.", 0);
+			sync(); // TODO INIT-LIKE
+			reboot_system(RB_HALT); // TODO INIT-LIKE
 #   else
-				strerr_warn2(INFO, "system reboot.", 0);
-				sync();
-				reboot_system(RB_AUTOBOOT);
+			strerr_warn2(INFO, "system reboot.", 0);
+			sync(); // TODO INIT-LIKE
+			reboot_system(RB_AUTOBOOT); // TODO INIT-LIKE
 #   endif
 #  endif /* ifdef RB_HALT_SYSTEM */
 # endif
-			}
-			if (pid == 0) _exit(0);
-			break;
-		default:
-			while (wait_pid(0, pid) == -1);
+		}
+		if (pid == 0)
+			_exit(0);
+		break;
+	default:
+		while (wait_pid(0, pid) == -1);
 	}
 #endif /* ifdef RB_AUTOBOOT */
 
-	for (;;) sig_pause();
+	for (;;)
+		sig_pause();
+
 	/* not reached */
 	strerr_die2x(0, INFO, "exit.");
-	return(0);
+	return 0;
 }
