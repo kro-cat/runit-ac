@@ -2,15 +2,13 @@
 #include "repeat.h"
 
 
-#define OPS 8
-
 unsigned int str_chr(register const char *s, int c)
 {
 	register char ch = c;
 	register const char *t = s;
 
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		if ((!*t) ||(*t == ch))
 			break;
 		++t;
@@ -25,7 +23,7 @@ int str_diff(register const char *s, register const char *t)
 	register char x;
 
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		x = *s;
 		if ((x != *t) || (!x))
 			break;
@@ -44,7 +42,7 @@ unsigned int str_len(const char *s)
 
 	t = s;
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		if (!*t)
 			return t - s;
 		++t;
@@ -57,7 +55,7 @@ int str_start(register const char *s, register const char *t)
 	register char x;
 
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		x = *t++;
 
 		if (!x)

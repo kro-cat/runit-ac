@@ -1,8 +1,10 @@
 #include <stdlib.h>
+#include <errno.h>
+
+#include <libs/byte/byte.h>
 
 #include "alloc.h"
-#include "byte.h"
-#include "error.h"
+
 
 #define ALIGNMENT 16 /* XXX: assuming that this alignment is enough */
 #define SPACE 2048 /* must be multiple of ALIGNMENT */
@@ -31,7 +33,7 @@ char *alloc(unsigned int n)
 	x = malloc(n);
 
 	if (!x)
-		errno = error_nomem;
+		errno = ENOMEM;
 
 	return x;
 }

@@ -4,8 +4,9 @@
 
 #include "sig.h"
 
-void (*sig_defaulthandler)() = SIG_DFL;
-void (*sig_ignorehandler)() = SIG_IGN;
+
+void (*sig_defaulthandler)(int) = SIG_DFL;
+void (*sig_ignorehandler)(int) = SIG_IGN;
 
 void sig_block(int sig)
 {
@@ -42,7 +43,7 @@ void sig_blocknone(void)
 #endif
 }
 
-void sig_catch(int sig, void (*f)())
+void sig_catch(int sig, void (*f)(int))
 {
 #ifdef HASSIGACTION
 	struct sigaction sa;

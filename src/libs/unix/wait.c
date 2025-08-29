@@ -1,7 +1,11 @@
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <errno.h>
 
-#include <config.h>
+#include "wait.h"
+
 
 int wait_nohang(int *wstat)
 {
@@ -14,7 +18,7 @@ int wait_pid(int *wstat, int pid)
 
 	do {
 		r = waitpid(pid, wstat, 0);
-	} while ((r == -1) && (errno == error_intr));
+	} while ((r == -1) && (errno == EINTR));
 
 	return r;
 }

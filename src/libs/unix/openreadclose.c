@@ -1,6 +1,7 @@
-#include <open.h>
-#include <readclose.h>
+#include <errno.h>
 
+#include "open.h"
+#include "readclose.h"
 #include "openreadclose.h"
 
 int openreadclose(const char *fn, stralloc *sa, unsigned int bufsize)
@@ -8,7 +9,7 @@ int openreadclose(const char *fn, stralloc *sa, unsigned int bufsize)
 	int fd = open_read(fn);
 
 	if (fd == -1) {
-		if (errno == error_noent)
+		if (errno == ENOENT)
 			return 0;
 
 		return -1;

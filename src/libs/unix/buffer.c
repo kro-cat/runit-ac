@@ -1,13 +1,14 @@
 #include <unistd.h>
+#include <errno.h>
+
+#include <libs/byte/str.h>
+#include <libs/byte/byte.h>
 
 #include "buffer.h"
-#include "str.h"
-#include "byte.h"
-#include "error.h"
+
 
 typedef int (*read_op)(int, char *, unsigned int);
 typedef int (*write_op)(int, const char *, unsigned int);
-
 
 void buffer_init(buffer *s, null_op op, int fd, char *buf, unsigned int len)
 {
@@ -24,7 +25,7 @@ static int oneread(null_op op, int fd, char *buf, unsigned int len)
 
 	for (;;) {
 		r = ((read_op)op)(fd, buf, len);
-		if ((r == -1) && (errno == error_intr))
+		if ((r == -1) && (errno == EINTR))
 			continue;
 		return r;
 	}
@@ -115,7 +116,7 @@ static int allwrite(null_op op, int fd, const char *buf, unsigned int len)
 	while (len) {
 		w = ((write_op)op)(fd, buf, len);
 		if (w == -1) {
-			if (errno == error_intr)
+			if (errno == EINTR)
 				continue;
 			/* note that some data may have been written */
 			return -1;
@@ -139,7 +140,7 @@ int buffer_flush(buffer *s)
 	return allwrite(s->op, s->fd, s->x, p);
 }
 
-int buffer_putalign(buffer *s, const char *buf, unsigned int len)
+int buffer_putalign(buffer *s, char const *buf, unsigned int len)
 {
 	unsigned int n;
 

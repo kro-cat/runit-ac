@@ -1,3 +1,6 @@
+#include <unistd.h>
+#include <errno.h>
+
 #include <libs/byte/str.h>
 #include <libs/byte/byte.h>
 
@@ -84,7 +87,7 @@ void pathexec_env_run(const char *file, const char *const *argv)
 	e[elen] = 0;
 
 	pathexec_run(file, argv, e);
-	alloc_free(e);
+	alloc_free((void *)e);
 }
 
 void pathexec(const char *const *argv)
@@ -95,7 +98,7 @@ void pathexec(const char *const *argv)
 static stralloc tmp;
 
 void pathexec_run(
-	const char *file, const char * const *argv, const char * const *envp)
+		  const char *file, const char * const *argv, const char * const *envp)
 {
 	const char *path;
 	unsigned int split;
@@ -129,11 +132,11 @@ void pathexec_run(
 			return;
 
 		execve(tmp.s, (char *const *)argv, (char *const *)envp);
-		if (errno != error_noent) {
+		if (errno != ENOENT) {
 			savederrno = errno;
-			if ((errno != error_acces)
-				&& (errno != error_perm)
-				&& (errno != error_isdir)) {
+			if ((errno != EACCES)
+			    && (errno != EPERM)
+			    && (errno != EISDIR)) {
 				return;
 			}
 		}

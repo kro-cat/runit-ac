@@ -1,26 +1,29 @@
+#include <config.h>
+
 #include <sys/types.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
-#include <lock.h>
+#include <errno.h>
 
 #include <libs/byte/byte.h>
 #include <libs/byte/str.h>
+#include <libs/byte/scan.h>
+#include <libs/byte/fmt.h>
 
+#include <libs/unix/lock.h>
 #include <libs/unix/sgetopt.h>
 #include <libs/unix/strerr.h>
-#include <libs/unix/uidgid.h>
 #include <libs/unix/prot.h>
 #include <libs/unix/strerr.h>
-#include <libs/unix/scan.h>
 #include <libs/unix/pathexec.h>
 #include <libs/unix/stralloc.h>
 #include <libs/unix/open.h>
 #include <libs/unix/openreadclose.h>
 
-#include "fmt.h"
 #include "direntry.h"
+#include "uidgid.h"
 
 
 const char *progname;
@@ -54,10 +57,10 @@ void warn(const char *m)
 }
 
 void warn6(const char *m0, const char *m1, const char *m2, const char *m3,
-           const char *m4, const char *m5)
+           const char *m4, const struct strerr *se)
 {
         if (verbose)
-                strerr_warn6(WARNING, m0, m1, m2, m3, m4, m5);
+                strerr_warn6(WARNING, m0, m1, m2, m3, m4, se);
 }
 
 void die_nomem()
@@ -187,8 +190,8 @@ void edir(const char *dirname)
                         continue;
 
                 if (openreadclose(d->d_name, &sa, 256) == -1) {
-                        if ((errno == error_isdir) && env_dir) {
-                                warn6(warning, "unable to read ", dirname, "/",
+                        if ((errno == EISDIR) && env_dir) {
+                                warn6("unable to read ", dirname, "/",
                                       d->d_name, ": ", &strerr_sys);
                                 continue;
                         } else {
@@ -267,28 +270,28 @@ void limit(int what, long l)
 }
 
 void slimit() {
-        if (limitd > = -1) {
+        if (limitd >= -1) {
 #ifdef RLIMIT_DATA
                 limit(RLIMIT_DATA, limitd);
 #else
                 warn("system does not support RLIMIT_DATA");
 #endif
         }
-        if (limits > = -1) {
+        if (limits >= -1) {
 #ifdef RLIMIT_STACK
                 limit(RLIMIT_STACK, limits);
 #else
                 warn("system does not support RLIMIT_STACK");
 #endif
         }
-        if (limitl > = -1) {
+        if (limitl >= -1) {
 #ifdef RLIMIT_MEMLOCK
                 limit(RLIMIT_MEMLOCK, limitl);
 #else
                 warn("system does not support RLIMIT_MEMLOCK");
 #endif
         }
-        if (limita > = -1) {
+        if (limita >= -1) {
 #ifdef RLIMIT_VMEM
                 limit(RLIMIT_VMEM, limita);
 #else
@@ -299,7 +302,7 @@ void slimit() {
 # endif
 #endif
         }
-        if (limito > = -1) {
+        if (limito >= -1) {
 #ifdef RLIMIT_NOFILE
                 limit(RLIMIT_NOFILE, limito);
 #else
@@ -310,35 +313,35 @@ void slimit() {
 # endif
 #endif
         }
-        if (limitp > = -1) {
+        if (limitp >= -1) {
 #ifdef RLIMIT_NPROC
                 limit(RLIMIT_NPROC, limitp);
 #else
                 warn("system does not support RLIMIT_NPROC");
 #endif
         }
-        if (limitf > = -1) {
+        if (limitf >= -1) {
 #ifdef RLIMIT_FSIZE
                 limit(RLIMIT_FSIZE, limitf);
 #else
                 warn("system does not support RLIMIT_FSIZE");
 #endif
         }
-        if (limitc > = -1) {
+        if (limitc >= -1) {
 #ifdef RLIMIT_CORE
                 limit(RLIMIT_CORE, limitc);
 #else
                 warn("system does not support RLIMIT_CORE");
 #endif
         }
-        if (limitr > = -1) {
+        if (limitr >= -1) {
 #ifdef RLIMIT_RSS
                 limit(RLIMIT_RSS, limitr);
 #else
                 warn("system does not support RLIMIT_RSS");
 #endif
         }
-        if (limitt > = -1) {
+        if (limitt >= -1) {
 #ifdef RLIMIT_CPU
                 limit(RLIMIT_CPU, limitt);
 #else
@@ -364,7 +367,7 @@ int main(int argc, const char **argv)
         progname = argv[0];
         for (i = str_len(progname); i; --i) {
                 if (progname[i -1] == '/') {
-                        progname + = i;
+                        progname += i;
                         break;
                 }
         }
@@ -493,12 +496,12 @@ int main(int argc, const char **argv)
                         nostderr = 1;
                         break;
                 case 'V':
-                        strerr_warn1(#PACKAGE_VERSION "\n", 0);
+                        strerr_warn1(PACKAGE_VERSION "\n", 0);
                         __attribute__((fallthrough));
                 case '?': usage();
                 }
         }
-        argv + = optind;
+        argv += optind;
         if (!argv || !*argv)
                 usage();
 
@@ -672,7 +675,7 @@ void setlock(int argc, const char *const *argv)
                 }
         }
 
-        argv + = optind;
+        argv += optind;
         if (!(fn = *argv))
                 setlock_usage();
 

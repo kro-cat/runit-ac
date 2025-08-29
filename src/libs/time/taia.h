@@ -1,9 +1,7 @@
-/* Public domain. */
-
 #ifndef TAIA_H
 #define TAIA_H
 
-#include <tai.h>
+#include "tai.h"
 
 struct taia {
 	struct tai sec;

@@ -8,9 +8,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <libs/time/iopause.h>
+
 #include <libs/unix/sig.h>
 #include <libs/unix/strerr.h>
-#include <libs/unix/iopause.h>
 #include <libs/unix/coe.h>
 #include <libs/unix/ndelay.h>
 #include <libs/unix/open.h>

@@ -2,16 +2,14 @@
 #include "repeat.h"
 
 
-#define OPS 8
-
-unsigned int byte_chr(char *s, register unsigned int n, int c)
+unsigned int byte_chr(const char *const s, register unsigned int n,
+		      register const int c)
 {
-	register char ch = c;
-	register char *t = s;
+	register const char *t = s;
 
 	for (;;) {
-REPEAT(OPS,
-		if (!n || (*t == ch))
+REPEAT8(
+		if (!n || (*t == (const char)c))
 			break;
 		++t;
 		--n;
@@ -21,31 +19,34 @@ REPEAT(OPS,
 	return t - s;
 }
 
-unsigned int byte_rchr(char *s, register unsigned int n, int c)
+unsigned int byte_rchr(const char *const s, register unsigned int n,
+		       register const int c)
 {
-	register char ch = c;
-	register char *t = s;
-	register char *u = 0;
+	register const char *t = s;
+	register const char *u = 0;
 
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		if (!n)
 			break;
-		if (*t == ch)
+		if (*t == (const char)c)
 			u = t;
 		++t;
 		--n;
 )
 	}
 
-	if (!u) u = t;
+	if (!u)
+		u = t;
+
 	return u - s;
 }
 
-void byte_copy(register char *to, register unsigned int n, register char *from)
+void byte_copy(register char *to, register unsigned int n,
+	       register const char *from)
 {
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		if (!n)
 			break;
 		*to++ = *from++;
@@ -54,13 +55,14 @@ REPEAT(OPS,
 	}
 }
 
-void byte_copyr(register char *to, register unsigned int n, register char *from)
+void byte_copyr(register char *to, register unsigned int n,
+		register const char *from)
 {
 	to += n;
 	from += n;
 
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		if (!n)
 			break;
 		*--to = *--from;
@@ -69,10 +71,11 @@ REPEAT(OPS,
 	}
 }
 
-int byte_diff(register char *s, register unsigned int n, register char *t)
+int byte_diff(register const char *s, register unsigned int n,
+	      register const char *t)
 {
 	for (;;) {
-REPEAT(OPS,
+REPEAT8(
 		if (!n)
 			return 0;
 		if (*s != *t)

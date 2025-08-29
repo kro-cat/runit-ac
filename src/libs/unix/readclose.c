@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <errno.h>
 
 #include "readclose.h"
 
@@ -14,7 +15,7 @@ int readclose_append(int fd, stralloc *sa, unsigned int bufsize)
 
 		r = read(fd, sa->s + sa->len, bufsize);
 
-		if ((r == -1) && (errno == error_intr))
+		if ((r == -1) && (errno == EINTR))
 			continue;
 
 		if (r <= 0) {
