@@ -3,12 +3,13 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <signal.h>
+#include <errno.h>
 
-#include <libs/byte/strerr.h>
 #include <libs/byte/fmt.h>
 #include <libs/byte/byte.h>
 
 #include <libs/time/taia.h>
+#include <libs/time/iopause.h>
 
 #include <libs/unix/sig.h>
 #include <libs/unix/env.h>
@@ -16,12 +17,11 @@
 #include <libs/unix/ndelay.h>
 #include <libs/unix/fifo.h>
 #include <libs/unix/open.h>
-#include <libs/unix/iopause.h>
 #include <libs/unix/buffer.h>
 #include <libs/unix/fd.h>
 #include <libs/unix/lock.h>
-
-#include "wait.h"
+#include <libs/unix/strerr.h>
+#include <libs/unix/wait.h>
 
 
 char *progname;
@@ -99,11 +99,11 @@ void warnx(char *m1, char *m2, char *m3)
 
 void stopservice(struct svdir *);
 
-void s_child()
+void s_child(int sig)
 {
 	write(selfpipe[1], "", 1);
 }
-void s_term()
+void s_term(int sig)
 {
 	sigterm = 1;
 	write(selfpipe[1], "", 1); /* XXX */
@@ -139,7 +139,7 @@ void update_status(struct svdir *s)
 			warn2("unable to open ", fpidnew);
 			return;
 		}
-		buffer_init(&b, buffer_unixwrite, fd, bspace, sizeof bspace);
+		init_buffer(&b, buffer_unixwrite, fd, bspace, sizeof bspace);
 		spid[fmt_ulong(spid, (unsigned long)s->pid)] = 0;
 		if (s->pid) {
 			buffer_puts(&b, spid);
@@ -159,7 +159,7 @@ void update_status(struct svdir *s)
 		warn2("unable to open ", fstatnew);
 		return;
 	}
-	buffer_init(&b, buffer_unixwrite, fd, bspace, sizeof bspace);
+	init_buffer(&b, buffer_unixwrite, fd, bspace, sizeof bspace);
 	switch (s->state) {
 	case S_DOWN:
 		buffer_puts(&b, "down");
@@ -271,7 +271,7 @@ unsigned int custom(struct svdir *s, char c)
 				fatal("unable to run control/?");
 			}
 			while (wait_pid(&w, pid) == -1) {
-				if (errno == error_intr)
+				if (errno == EINTR)
 					continue;
 
 				warn2("unable to wait for child ", a);
@@ -280,7 +280,7 @@ unsigned int custom(struct svdir *s, char c)
 			return !wait_exitcode(w);
 		}
 	} else {
-		if (errno == error_noent)
+		if (errno == ENOENT)
 			return 0;
 
 		warn2("unable to stat ", a);
@@ -293,7 +293,7 @@ void stopservice(struct svdir *s)
 {
 	if (s->pid && !custom(s, 't')) {
 		kill(s->pid, SIGTERM);
-		s->ctrl | = C_TERM;
+		s->ctrl |= C_TERM;
 		update_status(s);
 	}
 	if (s->want == W_DOWN) {
@@ -353,10 +353,10 @@ void startservice(struct svdir *s)
 			}
 		}
 
-		sig_uncatch(sig_child);
-		sig_unblock(sig_child);
-		sig_uncatch(sig_term);
-		sig_unblock(sig_term);
+		sig_uncatch(SIGCHLD);
+		sig_unblock(SIGCHLD);
+		sig_uncatch(SIGTERM);
+		sig_unblock(SIGTERM);
 
 		execve(*run, run, environ);
 
@@ -481,10 +481,10 @@ int main(__attribute__((unused)) int argc, char **argv)
 	ndelay_on(selfpipe[0]);
 	ndelay_on(selfpipe[1]);
 
-	sig_block(sig_child);
-	sig_catch(sig_child, s_child);
-	sig_block(sig_term);
-	sig_catch(sig_term, s_term);
+	sig_block(SIGCHLD);
+	sig_catch(SIGCHLD, s_child);
+	sig_block(SIGTERM);
+	sig_catch(SIGTERM, s_term);
 
 	if (chdir(dir) == -1)
 		fatal("unable to change to directory");
@@ -501,7 +501,7 @@ int main(__attribute__((unused)) int argc, char **argv)
 		svd[0].want = W_DOWN;
 
 	if (stat("log", &s) == -1) {
-		if (errno != error_noent)
+		if (errno != ENOENT)
 			warn("unable to stat() ./log: ");
 	} else {
 		if (!S_ISDIR(s.st_mode)) {
@@ -655,11 +655,11 @@ int main(__attribute__((unused)) int argc, char **argv)
 		taia_uint(&deadline, 3600);
 		taia_add(&deadline, &now, &deadline);
 
-		sig_unblock(sig_term);
-		sig_unblock(sig_child);
+		sig_unblock(SIGTERM);
+		sig_unblock(SIGCHLD);
 		iopause(x, 2 +haslog, &deadline, &now);
-		sig_block(sig_term);
-		sig_block(sig_child);
+		sig_block(SIGTERM);
+		sig_block(SIGCHLD);
 
 		while (read(selfpipe[0], &ch, 1) == 1);
 
@@ -671,7 +671,7 @@ int main(__attribute__((unused)) int argc, char **argv)
 			if (!child)
 				break;
 
-			if ((child == -1) && (errno != error_intr))
+			if ((child == -1) && (errno != EINTR))
 				break;
 
 			if (child == svd[0].pid) {

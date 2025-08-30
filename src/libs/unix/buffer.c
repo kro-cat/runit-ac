@@ -7,6 +7,10 @@
 #include "buffer.h"
 
 
+#define BUFFER_INIT(op,fd,buf,len) { (buf), 0, (len), (fd), (op) }
+#define BUFFER_INSIZE 8192
+#define BUFFER_OUTSIZE 8192
+
 typedef int (*read_op)(int, char *, unsigned int);
 typedef int (*write_op)(int, const char *, unsigned int);
 

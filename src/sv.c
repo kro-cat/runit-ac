@@ -1,6 +1,10 @@
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
+#include <string.h>
 
 #include <libs/byte/str.h>
 #include <libs/byte/fmt.h>
@@ -14,8 +18,7 @@
 #include <libs/unix/open.h>
 #include <libs/unix/env.h>
 #include <libs/unix/buffer.h>
-
-#include "wait.h"
+#include <libs/unix/wait.h>
 
 
 // TODO clean this up
@@ -29,7 +32,7 @@ unsigned int services;
 unsigned int rc = 0;
 unsigned int lsb;
 unsigned int verbose = 0;
-unsigned long wait = 7;
+unsigned long secs_wait = 7;
 unsigned int kll = 0;
 unsigned int islog = 0;
 struct taia tstart, tnow, tdiff;
@@ -97,7 +100,7 @@ void out(char *p, char *m1)
 
 	if (errno) {
 		buffer_puts(buffer_1, ": ");
-		buffer_puts(buffer_1, error_str(errno));
+		buffer_puts(buffer_1, strerror(errno));
 	}
 
 	buffer_puts(buffer_1, "\n");
@@ -159,7 +162,7 @@ void flush2(const char *s)
 int svstatus_get()
 {
 	if ((fd = open_write("supervise/ok")) == -1) {
-		if (errno == error_nodevice) {
+		if (errno == ENODEV) {
 			if (*acts == 'x')
 				ok("runsv not running");
 			else
@@ -201,12 +204,12 @@ unsigned int svstatus_print(char *m) {
 	struct stat s;
 
 	if (stat("down", &s) == -1) {
-		if (errno != error_noent) {
+		if (errno != ENOENT) {
 			outs2(WARN);
 			outs2("unable to stat ");
 			outs2(*service);
 			outs2("/down: ");
-			outs2(error_str(errno));
+			outs2(strerror(errno));
 			flush2("\n");
 			return 0;
 		}
@@ -284,7 +287,7 @@ int status(__attribute__((unused)) char *unused)
 	islog = 1;
 
 	if (chdir("log") == -1) {
-		if (errno != error_noent) {
+		if (errno != ENOENT) {
 			outs("; ");
 			warn("unable to change directory");
 		} else {
@@ -324,14 +327,14 @@ int checkscript()
 	int pid, w;
 
 	if (stat("check", &s) == -1) {
-		if (errno == error_noent)
+		if (errno == ENOENT)
 			return 1;
 
 		outs2(WARN);
 		outs2("unable to stat ");
 		outs2(*service);
 		outs2("/check: ");
-		outs2(error_str(errno));
+		outs2(strerror(errno));
 		flush2("\n");
 
 		return 0;
@@ -344,7 +347,7 @@ int checkscript()
 		outs2("unable to fork for ");
 		outs2(*service);
 		outs2("/check: ");
-		outs2(error_str(errno));
+		outs2(strerror(errno));
 		flush2("\n");
 
 		return 0;
@@ -359,21 +362,21 @@ int checkscript()
 		outs2("unable to run ");
 		outs2(*service);
 		outs2("/check: ");
-		outs2(error_str(errno));
+		outs2(strerror(errno));
 		flush2("\n");
 
 		_exit(0);
 	}
 
 	while (wait_pid(&w, pid) == -1) {
-		if (errno == error_intr)
+		if (errno == EINTR)
 			continue;
 
 		outs2(WARN);
 		outs2("unable to wait for child ");
 		outs2(*service);
 		outs2("/check: ");
-		outs2(error_str(errno));
+		outs2(strerror(errno));
 		flush2("\n");
 
 		return 0;
@@ -469,7 +472,7 @@ int control(char *a)
 	}
 
 	if ((fd = open_write("supervise/control")) == -1) {
-		if (errno != error_nodevice)
+		if (errno != ENODEV)
 			warn("unable to open supervise/control");
 		else if (*a == 'x')
 			ok("runsv not running");
@@ -512,18 +515,18 @@ int main(int argc, char **argv)
 		varservice = x;
 
 	if ((x = env_get("SVWAIT")))
-		scan_ulong(x, &wait);
+		scan_ulong(x, &secs_wait);
 
 	while ((i = getopt(argc, (const char* const*)argv, "w:vV")) != (unsigned int)opteof) {
 		switch(i) {
 		case 'w':
-			scan_ulong(optarg, &wait);
+			scan_ulong(optarg, &secs_wait);
 			__attribute__((fallthrough));
 		case 'v':
 			verbose = 1;
 			break;
 		case 'V':
-			strerr_warn1(VERSION, 0);
+			strerr_warn1(PACKAGE_VERSION, 0);
 			__attribute__((fallthrough));
 		case '?':
 			usage();
@@ -726,7 +729,7 @@ int main(int argc, char **argv)
 					else
 						done = 0;
 				}
-				if (*service && taia_approx(&tdiff) > wait) {
+				if (*service && taia_approx(&tdiff) > secs_wait) {
 					if (kll)
 						outs(KILL);
 					else

@@ -7,8 +7,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libs/time/str.h>
-#include <libs/time/byte.h>
+#include <libs/byte/str.h>
+#include <libs/byte/byte.h>
 
 #include <libs/unix/strerr.h>
 #include <libs/unix/sgetopt.h>
@@ -126,7 +126,7 @@ int main (int argc, const char * const *argv,
 			wtmp = 1;
 			break;
 		case 'V':
-			strerr_warn1(#PACKAGE_VERSION "\n", 0);
+			strerr_warn1(PACKAGE_VERSION "\n", 0);
 			__attribute__((fallthrough));
 		case '?':
 			usage();

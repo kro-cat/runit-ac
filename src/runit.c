@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <libs/time/iopause.h>
 
@@ -15,8 +16,8 @@
 #include <libs/unix/coe.h>
 #include <libs/unix/ndelay.h>
 #include <libs/unix/open.h>
+#include <libs/unix/wait.h>
 
-#include "wait.h"
 #include "runit.h"
 #include "reboot_system.h"
 
@@ -88,16 +89,16 @@ pid_t fork_exec(const char *path, void (*child_init)())
 		/* child */
 		setsid();
 
-		sig_uncatch(sig_child);
-		sig_uncatch(sig_int);
-		sig_ignore(sig_cont);
+		sig_uncatch(SIGCHLD);
+		sig_uncatch(SIGINT);
+		sig_ignore(SIGCONT);
 
-		sig_unblock(sig_alarm);
-		sig_unblock(sig_cont);
-		sig_unblock(sig_hangup);
-		sig_unblock(sig_int);
-		sig_unblock(sig_pipe);
-		sig_unblock(sig_term);
+		sig_unblock(SIGALRM);
+		sig_unblock(SIGCONT);
+		sig_unblock(SIGHUP);
+		sig_unblock(SIGINT);
+		sig_unblock(SIGPIPE);
+		sig_unblock(SIGTERM);
 
 		if (child_init)
 			child_init();
@@ -204,7 +205,7 @@ struct childinfo *del_child(pid_t pid)
  * Signal Handlers
  *****************************************************************************/
 
-void child_wait()
+void child_wait(int sig)
 {
 	/* handle child signals */
 	pid_t pid;
@@ -233,12 +234,12 @@ void child_wait()
 	} while (pid > 0);
 }
 
-void stage2_only()
+void stage2_only(int sig)
 {
 	strerr_warn2(WARNING, "signals only work in stage 2.", 0);
 }
 
-void stopit()
+void stopit(int sig)
 {
 	int i;
 	struct stat s;
@@ -254,7 +255,7 @@ void stopit()
 #ifdef DEBUG
 		strerr_warn2(WARNING, "sending sigterm...", 0);
 #endif
-		kill(stage->pid, sig_term);
+		kill(stage->pid, SIGTERM);
 
 		reget_stderr();
 
@@ -282,7 +283,7 @@ void stopit()
 	}
 }
 
-void ctrlaltdel()
+void ctrlaltdel(int sig)
 {
 	struct stat s;
 	struct childinfo *child;
@@ -303,11 +304,11 @@ void ctrlaltdel()
 
 		log_stage_exit(CTRLALTDEL, child->wstat);
 
-		stopit();
+		stopit(sig);
 	}
 }
 
-void powerfail()
+void powerfail(int sig)
 {
 	struct stat s;
 	struct childinfo *child;
@@ -326,7 +327,7 @@ void powerfail()
 
 		log_stage_exit(POWERFAIL, child->wstat);
 
-		stopit();
+		stopit(sig);
 	}
 }
 
@@ -370,16 +371,16 @@ void runit()
 		"/etc/runit/3"
 	};
 
-	sig_catch(sig_child, child_wait);
-	sig_catch(sig_pwr, powerfail);
+	sig_catch(SIGCHLD, child_wait);
+	sig_catch(SIGPWR, powerfail);
 
 	for (st = 0; st < 3; st++) {
 		if (st == 1) {
-			sig_catch(sig_cont, stopit);
-			sig_catch(sig_int, ctrlaltdel);
+			sig_catch(SIGCONT, stopit);
+			sig_catch(SIGINT, ctrlaltdel);
 		} else {
-			sig_catch(sig_cont, stage2_only);
-			sig_catch(sig_int, stage2_only);
+			sig_catch(SIGCONT, stage2_only);
+			sig_catch(SIGINT, stage2_only);
 		}
 
 		strerr_warn3(INFO, "enter stage: ", stage_path[st], 0);
@@ -391,8 +392,8 @@ void runit()
 			stage = add_child(fork_exec(stage_path[st], 0));
 		}
 
-		sig_unblock(sig_cont);
-		sig_unblock(sig_int);
+		sig_unblock(SIGCONT);
+		sig_unblock(SIGINT);
 
 		x.fd = selfpipe[0];
 		x.events = IOPAUSE_READ;
@@ -409,8 +410,8 @@ void runit()
 			while (read(selfpipe[0], &ch, 1) == 1);
 		}
 
-		sig_block(sig_cont);
-		sig_block(sig_int);
+		sig_block(SIGCONT);
+		sig_block(SIGINT);
 
 		log_stage_exit(stage_path[st], stage->wstat);
 
@@ -438,10 +439,10 @@ void runit()
 		}
 	}
 
-	sig_uncatch(sig_child);
-	sig_uncatch(sig_cont);
-	sig_uncatch(sig_int);
-	sig_uncatch(sig_pwr);
+	sig_uncatch(SIGCHLD);
+	sig_uncatch(SIGCONT);
+	sig_uncatch(SIGINT);
+	sig_uncatch(SIGPWR);
 }
 
 
@@ -465,12 +466,12 @@ int main (__attribute__((unused)) int argc,
 
 	setsid();
 
-	sig_block(sig_alarm);
-	sig_block(sig_cont);
-	sig_block(sig_hangup);
-	sig_block(sig_int);
-	sig_block(sig_pipe);
-	//sig_block(sig_term);  // TODO INIT-LIKE
+	sig_block(SIGALRM);
+	sig_block(SIGCONT);
+	sig_block(SIGHUP);
+	sig_block(SIGINT);
+	sig_block(SIGPIPE);
+	//sig_block(SIGTERM);  // TODO INIT-LIKE
 
 	/* console */
 	if ((fd = open_write("/dev/console")) != -1) {
@@ -497,7 +498,7 @@ int main (__attribute__((unused)) int argc,
 	if (RB_DISABLE_CAD == 0) reboot_system(0);
 #endif
 
-	strerr_warn2(INFO, "This is Runit version " #PACKAGE_VERSION ": booting.", 0);
+	strerr_warn2(INFO, "This is Runit version " PACKAGE_VERSION ": booting.", 0);
 
 	/* runit */
 	runit();

@@ -1,3 +1,5 @@
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/param.h>
@@ -8,6 +10,7 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include <libs/byte/str.h>
 #include <libs/byte/byte.h>
@@ -30,10 +33,10 @@
 #include <libs/unix/coe.h>
 #include <libs/unix/lock.h>
 #include <libs/unix/ndelay.h>
+#include <libs/unix/wait.h>
 
 #include "pmatch.h"
 #include "fmt_ptime.h"
-#include "wait.h"
 #include "direntry.h"
 
 
@@ -180,12 +183,12 @@ unsigned int processorstart(struct logdir *ld)
 		int fd;
 
 		/* child */
-		sig_uncatch(sig_term);
-		sig_uncatch(sig_alarm);
-		sig_uncatch(sig_hangup);
-		sig_unblock(sig_term);
-		sig_unblock(sig_alarm);
-		sig_unblock(sig_hangup);
+		sig_uncatch(SIGTERM);
+		sig_uncatch(SIGALRM);
+		sig_uncatch(SIGHUP);
+		sig_unblock(SIGTERM);
+		sig_unblock(SIGALRM);
+		sig_unblock(SIGHUP);
 
 		if (verbose)
 			strerr_warn5(INFO, "processing: ", ld->name, "/", ld->fnsave, 0);
@@ -204,7 +207,7 @@ unsigned int processorstart(struct logdir *ld)
 			fatal2("unable to move filedescriptor for processor", ld->name);
 
 		if ((fd = open_read("state")) == -1) {
-			if (errno == error_noent) {
+			if (errno == ENOENT) {
 				if ((fd = open_trunc("state")) == -1)
 					fatal2("unable to create empty state for processor", ld->name);
 				close(fd);
@@ -241,11 +244,11 @@ unsigned int processorstop(struct logdir *ld)
 	char f[28];
 
 	if (ld->ppid) {
-		sig_unblock(sig_hangup);
+		sig_unblock(SIGHUP);
 		while (wait_pid(&wstat, ld->ppid) == -1)
 			pause2("error waiting for processor", ld->name);
 
-		sig_block(sig_hangup);
+		sig_block(SIGHUP);
 		ld->ppid = 0;
 	}
 	if (ld->fddir == -1)
@@ -361,7 +364,7 @@ unsigned int rotate(struct logdir *ld) {
 		taia_now(&now);
 		fmt_taia(ld->fnsave, &now);
 		errno = 0;
-	} while ((stat(ld->fnsave, &st) != -1) || (errno != error_noent));
+	} while ((stat(ld->fnsave, &st) != -1) || (errno != ENOENT));
 
 	if (ld->tmax && taia_less(&ld->trotate, &now)) {
 		taia_uint(&ld->trotate, ld->tmax);
@@ -722,7 +725,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn)
 				fmt_taia(ld->fnsave, &now);
 				errno = 0;
 			} while ((stat(ld->fnsave, &st) != -1)
-				 || (errno != error_noent));
+				 || (errno != ENOENT));
 
 			while (rename("current", ld->fnsave) == -1)
 				pause2("unable to rename current", ld->name);
@@ -732,7 +735,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn)
 		} else {
 			ld->size = st.st_size;
 		}
-	} else if (errno != error_noent) {
+	} else if (errno != ENOENT) {
 		logdir_close(ld);
 		warn2("unable to stat current", ld->name);
 		while (fchdir(fdwdir) == -1)
@@ -747,7 +750,7 @@ unsigned int logdir_open(struct logdir *ld, const char *fn)
 	while (fchmod(ld->fdcur, 0644) == -1)
 		pause2("unable to set mode of current", ld->name);
 
-	buffer_init(&ld->b, buffer_pwrite, ld -dir, ld->btmp, buflen);
+	init_buffer(&ld->b, buffer_pwrite, ld -dir, ld->btmp, buflen);
 
 	if (verbose) {
 		if (i == 0)
@@ -812,23 +815,23 @@ int buffer_pread(int fd, char *s, unsigned int len)
 		}
 	}
 
-	sig_unblock(sig_term);
-	sig_unblock(sig_child);
-	sig_unblock(sig_alarm);
-	sig_unblock(sig_hangup);
+	sig_unblock(SIGTERM);
+	sig_unblock(SIGCHLD);
+	sig_unblock(SIGALRM);
+	sig_unblock(SIGHUP);
 
 	iopause(&in, 1, &trotate, &now);
 
-	sig_block(sig_term);
-	sig_block(sig_child);
-	sig_block(sig_alarm);
-	sig_block(sig_hangup);
+	sig_block(SIGTERM);
+	sig_block(SIGCHLD);
+	sig_block(SIGALRM);
+	sig_block(SIGHUP);
 
 	i = read(fd, s, len);
 	if (i == (unsigned int)-1) {
-		if (errno == error_again)
-			errno = error_intr;
-		if (errno != error_intr)
+		if (errno == EAGAIN)
+			errno = EINTR;
+		if (errno != EINTR)
 			warn("unable to read standard input");
 	}
 	if (i > 0)
@@ -837,14 +840,14 @@ int buffer_pread(int fd, char *s, unsigned int len)
 	return i;
 }
 
-void sig_term_handler(void)
+void sig_term_handler(int sig)
 {
 	if (verbose)
 		strerr_warn2(INFO, "sigterm received.", 0);
 	exitasap = 1;
 }
 
-void sig_child_handler(void)
+void sig_child_handler(int sig)
 {
 	int pid;
 	unsigned int l;
@@ -861,13 +864,13 @@ void sig_child_handler(void)
 	}
 }
 
-void sig_alarm_handler(void)
+void sig_alarm_handler(int sig)
 {
 	if (verbose) strerr_warn2(INFO, "sigalarm received.", 0);
 	rotateasap = 1;
 }
 
-void sig_hangup_handler(void)
+void sig_hangup_handler(int sig)
 {
 	if (verbose) strerr_warn2(INFO, "sighangup received.", 0);
 	reopenasap = 1;
@@ -969,7 +972,7 @@ int main(int argc, const char **argv)
 	if (!databuf)
 		die_nomem();
 
-	buffer_init(&data, buffer_pread, 0, databuf, buflen);
+	init_buffer(&data, buffer_pread, 0, databuf, buflen);
 	line = (char*)alloc(linemax *sizeof(char));
 	if (!line)
 		die_nomem();
@@ -979,15 +982,15 @@ int main(int argc, const char **argv)
 	in.events = IOPAUSE_READ;
 	ndelay_on(in.fd);
 
-	sig_block(sig_term);
-	sig_block(sig_child);
-	sig_block(sig_alarm);
-	sig_block(sig_hangup);
+	sig_block(SIGTERM);
+	sig_block(SIGCHLD);
+	sig_block(SIGALRM);
+	sig_block(SIGHUP);
 
-	sig_catch(sig_term, sig_term_handler);
-	sig_catch(sig_child, sig_child_handler);
-	sig_catch(sig_alarm, sig_alarm_handler);
-	sig_catch(sig_hangup, sig_hangup_handler);
+	sig_catch(SIGTERM, sig_term_handler);
+	sig_catch(SIGCHLD, sig_child_handler);
+	sig_catch(SIGALRM, sig_alarm_handler);
+	sig_catch(SIGHUP, sig_hangup_handler);
 
 	logdirs_reopen();
 

@@ -11,11 +11,9 @@ typedef struct buffer {
 	null_op op; // generic operation
 } buffer;
 
-#define BUFFER_INIT(op,fd,buf,len) { (buf), 0, (len), (fd), (op) }
-#define BUFFER_INSIZE 8192
-#define BUFFER_OUTSIZE 8192
-
 extern void buffer_init(buffer *s, null_op op, int fd, char *buf, unsigned int len);
+
+#define init_buffer(s,o,f,b,l) buffer_init((s),(null_op)(o),(f),(b),(l))
 
 extern int buffer_flush(buffer *);
 extern int buffer_put(buffer *, const char *, unsigned int);

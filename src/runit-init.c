@@ -1,7 +1,10 @@
+#include <config.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include <libs/unix/strerr.h>
 #include <libs/unix/sig.h>
@@ -30,10 +33,10 @@ void runit_halt()
 	if (chmod(STOPIT, 0100) == -1)
 		strerr_die4sys(111, FATAL, "unable to chmod ", STOPIT, ": ");
 
-	if ((chmod(REBOOT, 0) == -1) && (errno != error_noent))
+	if ((chmod(REBOOT, 0) == -1) && (errno != ENOENT))
 		strerr_die4sys(111, FATAL, "unable to chmod ", REBOOT, ": ");
 
-	kill(1, sig_cont);
+	kill(1, SIGCONT);
 	_exit(0);
 }
 
@@ -51,7 +54,7 @@ void runit_reboot()
 	if (chmod(REBOOT, 0100) == -1)
 		strerr_die4sys(111, FATAL, "unable to chmod ", REBOOT, ": ");
 
-	kill(1, sig_cont);
+	kill(1, SIGCONT);
 	_exit(0);
 }
 
@@ -86,7 +89,7 @@ int main(__attribute__((unused)) int argc,
 		break;
 	case '-':
 		if ((*argv)[1] == 'V')
-			strerr_warn1(#PACKAGE_VERSION "\n", 0);
+			strerr_warn1(PACKAGE_VERSION "\n", 0);
 		__attribute__((fallthrough));
 	default:
 		usage();

@@ -1,7 +1,7 @@
 #include "pmatch.h"
 
 
-int pmatch(const char *p, const char *s, unsigned int len)
+unsigned int pmatch(const char *p, const char *s, unsigned int len)
 {
 	for (;;) {
 		char c = *p++;

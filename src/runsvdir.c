@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
 #include <libs/byte/str.h>
 
@@ -15,8 +16,8 @@
 #include <libs/unix/sig.h>
 #include <libs/unix/ndelay.h>
 #include <libs/unix/fd.h>
+#include <libs/unix/wait.h>
 
-#include "wait.h"
 #include "direntry.h"
 
 
@@ -49,12 +50,12 @@ void warn3x(char *m1, char *m2, char *m3)
 
 int exitsoon = 0;
 
-void s_term()
+void s_term(int sig)
 {
 	exitsoon = 1;
 }
 
-void s_hangup()
+void s_hangup(int sig)
 {
 	exitsoon = 2;
 }
@@ -97,8 +98,8 @@ void runsv(int no, char *name)
 		prog[1] = name;
 		prog[2] = 0;
 
-		sig_uncatch(sig_hangup);
-		sig_uncatch(sig_term);
+		sig_uncatch(SIGHUP);
+		sig_uncatch(SIGTERM);
 
 		if (pgrp)
 			setsid();
@@ -244,8 +245,8 @@ int main(__attribute__((unused)) int argc, char **argv)
 			usage();
 	}
 
-	sig_catch(sig_term, s_term);
-	sig_catch(sig_hangup, s_hangup);
+	sig_catch(SIGTERM, s_term);
+	sig_catch(SIGHUP, s_hangup);
 	svdir = *argv++;
 
 	if (argv && *argv) {
@@ -334,14 +335,14 @@ int main(__attribute__((unused)) int argc, char **argv)
 		taia_uint(&deadline, check ? 1 : 5);
 		taia_add(&deadline, &now, &deadline);
 
-		sig_block(sig_child);
+		sig_block(SIGCHLD);
 
 		if (rplog)
 			iopause(io, 1, &deadline, &now);
 		else
 			iopause(0, 0, &deadline, &now);
 
-		sig_unblock(sig_child);
+		sig_unblock(SIGCHLD);
 
 		if (rplog && (io[0].revents | IOPAUSE_READ)) {
 			while (read(logpipe[0], &ch, 1) > 0) {

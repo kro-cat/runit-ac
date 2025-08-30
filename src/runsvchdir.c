@@ -2,9 +2,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
 
-#include <libs/byte/strerr.h>
-
+#include <libs/unix/strerr.h>
 #include <libs/unix/buffer.h>
 
 
@@ -53,7 +53,7 @@ int main (__attribute__((unused)) int argc, char **argv)
 		fatal("unable to chdir: ", SVDIR);
 
 	if (stat(new, &s) == -1) {
-		if (errno == error_noent)
+		if (errno == ENOENT)
 			fatal(new, 0);
 
 		fatal("unable to stat: ", new);
@@ -77,7 +77,7 @@ int main (__attribute__((unused)) int argc, char **argv)
 	}
 
 	if (unlink("current.new") == -1) {
-		if (errno != error_noent)
+		if (errno != ENOENT)
 			fatal("unable to unlink: ", "current.new");
 	}
 
@@ -85,7 +85,7 @@ int main (__attribute__((unused)) int argc, char **argv)
 		fatal("unable to create: current.new -> ", new);
 
 	if (unlink("previous") == -1) {
-		if (errno != error_noent)
+		if (errno != ENOENT)
 			fatal("unable to unlink: ", "previous");
 	}
 
