@@ -25,14 +25,6 @@ AC_ARG_ENABLE(utmpset,
 )
 AM_CONDITIONAL([ENABLE_UTMPSET], [test "x${enable_utmpset}" = "xyes"])
 
-AC_ARG_ENABLE(container-mode,
-[AS_HELP_STRING([--enable-container-mode], [run as non-root, disable pid 1 enforcement, don't sync on shutdown, disable kernel halt and reboot commands])],
-  [
-    AC_MSG_WARN([CONTAINER MODE IS ENABLED, DO NOT USE THIS AS A REAL INIT HANDLER])
-    AC_DEFINE([CONTAINER_MODE], [], [Make runit act like a normal program])
-  ]
-)
-
 #host switch
 AC_CANONICAL_HOST
 

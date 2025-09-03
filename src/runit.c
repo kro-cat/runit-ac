@@ -525,23 +525,21 @@ int main (__attribute__((unused)) int argc,
 			reboot_system(RB_POWER_OFF); // TODO INIT-LIKE
 			sleep(2);
 # endif
-# ifndef UNGRACEFUL_DEATH
-#  ifdef RB_HALT_SYSTEM
+# ifdef RB_HALT_SYSTEM
 			strerr_warn2(INFO, "system halt.", 0);
 			sync(); // TODO INIT-LIKE
 			reboot_system(RB_HALT_SYSTEM); // TODO INIT-LIKE
-#  else
-#   ifdef RB_HALT
+# else
+#  ifdef RB_HALT
 			strerr_warn2(INFO, "system halt.", 0);
 			sync(); // TODO INIT-LIKE
 			reboot_system(RB_HALT); // TODO INIT-LIKE
-#   else
+#  else
 			strerr_warn2(INFO, "system reboot.", 0);
 			sync(); // TODO INIT-LIKE
 			reboot_system(RB_AUTOBOOT); // TODO INIT-LIKE
-#   endif
-#  endif /* ifdef RB_HALT_SYSTEM */
-# endif
+#  endif /* ifdef RB_HALT */
+# endif /* ifdef RB_HALT_SYSTEM */
 		}
 		if (pid == 0)
 			_exit(0);
